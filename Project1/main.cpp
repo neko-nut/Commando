@@ -22,6 +22,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 #include "Cube.h"
+#include "Texture.h"
 
 
 using namespace std;
@@ -32,13 +33,17 @@ int height = 600;
 GLfloat rotate_y = 0.0f;
 Shader* meshShader;
 Shader* cubeShader;
+Shader* textureShader;
 Mesh *humanMesh;
 Mesh *ground;
+Mesh *house;
 Cube *cube;
+
+Texture* text;
 
 GLfloat transform_x = 0.0f;
 GLfloat transform_y = 0.0f;
-int state = 1;
+int state = 0;
 
 
 void display() {
@@ -65,7 +70,7 @@ void display() {
 	// Root of the Hierarchy
 	mat4 view = identity_mat4();
 	if (state == 1) {
-		view = rotate_x_deg(view, 90.0f);
+		view = rotate_x_deg(view, 30.0f);
 	}
 	
 	//view = rotate_x_deg(view, 30.0f);
@@ -85,17 +90,32 @@ void display() {
 	model = scale(model, vec3(6.25f, 6.25f, 6.25f));
 
 	// Set up the child matrix
-	mat4 modelChild = identity_mat4();
-	modelChild = translate(modelChild, vec3(0.0f, -1.0f, 0.0f));
-	modelChild = translate(modelChild, vec3(transform_x, 0.0f, transform_y));
-	modelChild = scale(modelChild, vec3(10.0f, 10.0f, 10.0f));
+	mat4 modelGround = identity_mat4();
+	modelGround = translate(modelGround, vec3(0.0f, -0.17f, 0.0f));
+	modelGround = translate(modelGround, vec3(transform_x, 0.0f, transform_y));
+	modelGround = scale(modelGround, vec3(100.0f, 10.0f, 100.0f));
 	 
 	// Apply the root matrix to the child matrix
-	modelChild = model * modelChild;
+	modelGround = model * modelGround;
 	// Update the appropriate uniform and draw the mesh again
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelChild.m);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelGround.m);
 	ground->linkCurrentBuffertoShader(meshShader->ID);
+	text->Bind(GL_TEXTURE0);
 	glDrawArrays(GL_TRIANGLES, 0, ground->mesh_data.mPointCount);
+
+
+	modelGround = scale(modelGround, vec3(0.01f, 0.1f, 0.01f));
+	mat4 modelBarrier = identity_mat4();
+	modelBarrier = scale(modelBarrier, vec3(0.7f, 0.7f, 0.7f));
+	modelBarrier = translate(modelBarrier, vec3(0.5f, 0.0f, -10.0f));
+	modelBarrier = modelGround * modelBarrier;
+
+	// Update the appropriate uniform and draw the mesh again
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelBarrier.m);
+	house->linkCurrentBuffertoShader(meshShader->ID);
+	glDrawArrays(GL_TRIANGLES, 0, house->mesh_data.mPointCount);
+
+
 	glutSwapBuffers();
 }
 
@@ -125,13 +145,19 @@ void init()
 	meshShader->CompileShaders("../shades/simpleVertexShader.txt", "../shades/simpleFragmentShader.txt");
 	cubeShader = new Shader();
 	cubeShader->CompileShaders("../shades/cubeVertexShader.txt", "../shades/cubeFragmentShader.txt");
+	textureShader = new Shader();
+	textureShader->CompileShaders("../shades/textureVertexShader.txt", "../shades/textureFragmentShader.txt");
 	// load mesh into a vertex buffer array
 	humanMesh = new Mesh();
 	humanMesh->generateObjectBufferMesh("../models/FinalBaseMesh.obj");
 	cube = new Cube();
 	cube->generateObjectBuffer();
 	ground = new Mesh();
-	ground->generateObjectBufferMesh("../models/testtexture.dae");
+	ground->generateObjectBufferMesh("../models/ground.dae");
+	house = new Mesh();
+	house->generateObjectBufferMesh("../models/house.dae");
+	text = new Texture(GL_TEXTURE_2D, "../textures/grass.JPG");
+	text->Load();
 	
 }
 
@@ -159,6 +185,8 @@ void keypress(unsigned char key, int x, int y) {
 
 	glutPostRedisplay();
 }
+
+
 
 int main(int argc, char** argv) {
 

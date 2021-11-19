@@ -85,6 +85,7 @@ void Mesh::generateObjectBufferMesh(const char* mesh_name) {
 	glGenBuffers (1, &vt_vbo);
 	glBindBuffer (GL_ARRAY_BUFFER, vt_vbo);
 	glBufferData (GL_ARRAY_BUFFER, mesh_data.mTextureCoords.size() * sizeof(vec2), &mesh_data.mTextureCoords[0], GL_STATIC_DRAW);
+
 }
 #pragma endregion VBO_FUNCTIONS
 
@@ -93,7 +94,7 @@ void Mesh::linkCurrentBuffertoShader(GLuint shaderProgramID) {
 
 	loc1 = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2 = glGetAttribLocation(shaderProgramID, "vertex_normal");
-	//loc3 = glGetAttribLocation(shaderProgramID, "vertex_texture");
+	loc3 = glGetAttribLocation(shaderProgramID, "vertex_texture");
 
 	unsigned int vao = 0;
 	glBindVertexArray(vao);

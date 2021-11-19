@@ -17,3 +17,7 @@ freeglut/
 
 glew-1.10.0/
 Project1.sln
+
+*.filters
+
+Project1/Project1.vcxproj
