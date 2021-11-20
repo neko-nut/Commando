@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <vector> // STL dynamic memory.
+#include <stdlib.h> 
 
 // OpenGL includes
 #include <GL/glew.h>
@@ -23,7 +24,9 @@
 #include "Mesh.h"
 #include "Cube.h"
 #include "Texture.h"
+#include "Game.h"
 
+#define  PI 3.1415926
 
 using namespace std;
 
@@ -41,10 +44,19 @@ Cube *cube;
 
 Texture* grass;
 Texture* white;
+Texture* red;
+Game* game;
 
 GLfloat transform_x = 0.0f;
 GLfloat transform_y = 0.0f;
+GLfloat rotate_x = 0.0f;
+
+GLfloat enemy_x = 10.0f;
+GLfloat enemy_y = 20.0f;
+
 int state = 0;
+
+
 
 
 void display() {
@@ -70,25 +82,34 @@ void display() {
 
 	// Root of the Hierarchy
 	mat4 view = identity_mat4();
+	
+	view = rotate_y_deg(view, 180.0f);
+	view = rotate_x_deg(view, 10.0f);
+	view = translate(view, vec3(0.0, 0.0, -10.0f));
 	if (state == 1) {
-		view = rotate_x_deg(view, 20.0f);
+		view = rotate_x_deg(view, -10.0f);
+		view = translate(view, vec3(0.0, 0.0, 11.0f));
 	}
 	
-	//view = rotate_x_deg(view, 30.0f);
-	view = translate(view, vec3(0.0, 0.0, -10.0f));
 	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 	mat4 model = identity_mat4();
+	
 	model = translate(model, vec3(0.0f, -10.0f, 0.0f));
-	model = scale(model, vec3(0.16f, 0.16f, 0.16f));
+	model = rotate_y_deg(model, rotate_x);
+	mat4 humanGround = identity_mat4();
+	humanGround = rotate_y_deg(humanGround, -rotate_x);
+	humanGround = translate(humanGround, vec3(0.0f, 30.0f, 0.0f));
+	humanGround = scale(humanGround, vec3(0.25f, 0.25f, 0.25f));
+	
+	humanGround = model * humanGround;
 
 	// update uniforms & draw
 	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, model.m);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, humanGround.m);
 	
 	humanMesh->linkCurrentBuffertoShader(meshShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
-	model = scale(model, vec3(6.25f, 6.25f, 6.25f));
 
 
 	glUseProgram(textureShader->ID);
@@ -100,7 +121,7 @@ void display() {
 
 	// Set up the child matrix
 	mat4 modelGround = identity_mat4();
-	modelGround = translate(modelGround, vec3(0.0f, -0.17f, 0.0f));
+	modelGround = translate(modelGround, vec3(0.0f, -0.19f, 0.0f));
 	modelGround = scale(modelGround, vec3(100.0f, 10.0f, 100.0f));
 	modelGround = translate(modelGround, vec3(transform_x, 0.0f, transform_y));
 	 
@@ -111,28 +132,51 @@ void display() {
 	glUniformMatrix4fv(texture_view_mat_location, 1, GL_FALSE, view.m);
 	glUniformMatrix4fv(texture_matrix_location, 1, GL_FALSE, modelGround.m);
 	ground->linkCurrentBuffertoShader(textureShader->ID);
-	grass->Bind(GL_TEXTURE_2D);
+	grass->Bind(GL_TEXTURE0);
 	glDrawArrays(GL_TRIANGLES, 0, ground->mesh_data.mPointCount);
 	
-
-
 	
 	mat4 modelBarrier = identity_mat4();
 	modelBarrier = scale(modelBarrier, vec3(0.01f, 0.1f, 0.01f));
-	modelBarrier = scale(modelBarrier, vec3(3.0f, 6.0f, 3.0f));
-	modelBarrier = translate(modelBarrier, vec3(0.5f, 0.0f, 0.0f));
+	modelBarrier = scale(modelBarrier, vec3(2.0f, 2.0f, 2.0f));
+	modelBarrier = translate(modelBarrier, vec3(0.0f, 1.0f, 0.3f));
+
 	modelBarrier = modelGround * modelBarrier;
 
 	// Update the appropriate uniform and draw the mesh again
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelBarrier.m);
-	white->Bind(GL_TEXTURE_2D);
+	white->Bind(GL_TEXTURE0);
 	house->linkCurrentBuffertoShader(meshShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, house->mesh_data.mPointCount);
 
 
+	enemy_y = enemy_y - 0.01;
+	mat4 modelEnemies = identity_mat4();
+	modelEnemies = translate(modelEnemies, vec3(enemy_x, 0.0f, enemy_y));
+	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
+	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
+	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
+	modelEnemies = modelGround * modelEnemies;
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
+	red->Bind(GL_TEXTURE0);
+	humanMesh->linkCurrentBuffertoShader(meshShader->ID);
+	glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+
 	glutSwapBuffers();
+
 }
 
+bool collision() {
+	int x = 15;
+	int y = 12.5;
+
+	
+	if (transform_y < -30 + x && transform_x < y && transform_x > -y && transform_y > -30 - x) {
+		return true;
+	}
+
+	return false;
+}
 
 void updateScene() {
 
@@ -163,7 +207,7 @@ void init()
 	textureShader ->CompileShaders("../shades/textureVertexShader.txt", "../shades/textureFragmentShader.txt");
 	// load mesh into a vertex buffer array
 	humanMesh = new Mesh();
-	humanMesh->generateObjectBufferMesh("../models/FinalBaseMesh.obj");
+	humanMesh->generateObjectBufferMesh("../models/human.dae");
 	cube = new Cube();
 	cube->generateObjectBuffer();
 	ground = new Mesh();
@@ -177,24 +221,38 @@ void init()
 
 	white = new Texture(GL_TEXTURE_2D, "../textures/white.JPG");
 	white->Load();
+
+	red = new Texture(GL_TEXTURE_2D, "../textures/red.JPG");
+	red->Load();
 	
 }
 
 // Placeholder code for the keypress
 void keypress(unsigned char key, int x, int y) {
 	if (key == 'w') {
-		transform_y = transform_y + 0.1f;
+		transform_y = transform_y - 0.5 * cos(rotate_x*PI / 180.0f);
+		transform_x = transform_x + 0.5 * sin(rotate_x*PI / 180.0f);
+		if (collision()) {
+			transform_y = transform_y + 0.5 * cos(rotate_x*PI / 180.0f);
+			transform_x = transform_x - 0.5 * sin(rotate_x*PI / 180.0f);
+		}
 	}
 	if (key == 'a') {
-		transform_x = transform_x + 0.1f;
+		rotate_x = rotate_x - 1;
 	}
 	if (key == 's') {
-		transform_y = transform_y - 0.1f;
+		transform_y = transform_y + 0.5 * cos(rotate_x*PI / 180.0f);
+		transform_x = transform_x - 0.5 * sin(rotate_x*PI / 180.0f);
+		if (collision()) {
+			transform_y = transform_y - 0.5 * cos(rotate_x*PI / 180.0f);
+			transform_x = transform_x + 0.5 * sin(rotate_x*PI / 180.0f);
+		}
 	}
 	if (key == 'd') {
-		transform_x = transform_x - 0.1f;
+		rotate_x = rotate_x + 1;
 	}
 	if (key == ' ') {
+		
 		if (state == 0) {
 			state = 1;
 		} else if (state == 1){
