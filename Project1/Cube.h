@@ -8,14 +8,13 @@ class Cube
 {
 private:
 	
-	GLuint numVertices = 3;
-	GLfloat vertices[9] = { -1.0f, -1.0f, 0.0f,
-			1.0f, -1.0f, 0.0f,
-			0.0f, 1.0f, 0.0f };
-	GLfloat colors[12] = { 0.0f, 1.0f, 0.0f, 1.0f,
-			1.0f, 0.0f, 0.0f, 1.0f,
-			0.0f, 0.0f, 1.0f, 1.0f };
-	
+	GLuint numVertices = 4;
+	float vertices[12] = {
+		 0.01f,  0.01f, 0.0f,// top right
+		 0.01f, -0.01f, 0.0f, // bottom right
+		-0.01f, -0.01f, 0.0f, // bottom left
+		-0.01f,  0.01f, 0.0f, // top left 
+	};
 public:
 	GLuint VBO;
 	GLuint generateObjectBuffer();

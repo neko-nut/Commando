@@ -23,8 +23,10 @@
 #include "Shader.h"
 #include "Mesh.h"
 #include "Cube.h"
+#include "TextureScreen.h"
 #include "Texture.h"
 #include "Game.h"
+
 
 #define  PI 3.1415926
 
@@ -45,7 +47,9 @@ Cube *cube;
 Texture* grass;
 Texture* white;
 Texture* red;
+Texture* sight;
 Game* game;
+TextureScreen* test;
 
 GLfloat transform_x = 0.0f;
 GLfloat transform_y = 0.0f;
@@ -69,9 +73,18 @@ void display() {
 
 
 	//glUseProgram(cubeShader->ID);
-	//glBindBuffer(GL_ARRAY_BUFFER, cube->VBO);
-	//cube->linkCurrentBuffertoShader(cubeShader->ID);
-	//glDrawArrays(GL_TRIANGLES, 0, 3);
+	//glBindBuffer(GL_ARRAY_BUFFER, test->VBO);
+	//test->linkCurrentBuffertoShader(cubeShader->ID);
+	//sight->Bind(GL_TEXTURE0);
+	//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	if (state == 1) {
+		glUseProgram(cubeShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, cube->VBO);
+		cube->linkCurrentBuffertoShader(cubeShader->ID);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	}
+
 
 	glUseProgram(meshShader->ID);
 	//Declare your uniform variables that will be used in your shader
@@ -87,8 +100,8 @@ void display() {
 	view = rotate_x_deg(view, 10.0f);
 	view = translate(view, vec3(0.0, 0.0, -10.0f));
 	if (state == 1) {
+		view = translate(view, vec3(0.0, 0.0, 10.18f));
 		view = rotate_x_deg(view, -10.0f);
-		view = translate(view, vec3(0.0, 0.0, 11.0f));
 	}
 	
 	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
@@ -150,7 +163,7 @@ void display() {
 	glDrawArrays(GL_TRIANGLES, 0, house->mesh_data.mPointCount);
 
 
-	enemy_y = enemy_y - 0.01;
+	//enemy_y = enemy_y - 0.01;
 	mat4 modelEnemies = identity_mat4();
 	modelEnemies = translate(modelEnemies, vec3(enemy_x, 0.0f, enemy_y));
 	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
@@ -215,6 +228,9 @@ void init()
 	house = new Mesh();
 	house->generateObjectBufferMesh("../models/house.dae");
 
+	test = new TextureScreen();
+	test->generateObjectBuffer();
+
 	// load tecture
 	grass = new Texture(GL_TEXTURE_2D, "../textures/grass.JPG");
 	grass->Load();
@@ -224,6 +240,9 @@ void init()
 
 	red = new Texture(GL_TEXTURE_2D, "../textures/red.JPG");
 	red->Load();
+
+	sight = new Texture(GL_TEXTURE_2D, "../textures/test.png");
+	sight->Load();
 	
 }
 
