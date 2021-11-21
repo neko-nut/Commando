@@ -53,12 +53,13 @@ TextureScreen* test;
 
 GLfloat transform_x = 0.0f;
 GLfloat transform_y = 0.0f;
-GLfloat rotate_x = 0.0f;
+float rotate_x = 0.0f;
 
 GLfloat enemy_x = 10.0f;
 GLfloat enemy_y = 20.0f;
 
-int state = 0;
+int viewstate = 0;
+int enemystate = 0;
 
 
 
@@ -78,7 +79,7 @@ void display() {
 	//sight->Bind(GL_TEXTURE0);
 	//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-	if (state == 1) {
+	if (viewstate == 1) {
 		glUseProgram(cubeShader->ID);
 		glBindBuffer(GL_ARRAY_BUFFER, cube->VBO);
 		cube->linkCurrentBuffertoShader(cubeShader->ID);
@@ -99,7 +100,7 @@ void display() {
 	view = rotate_y_deg(view, 180.0f);
 	view = rotate_x_deg(view, 10.0f);
 	view = translate(view, vec3(0.0, 0.0, -10.0f));
-	if (state == 1) {
+	if (viewstate == 1) {
 		view = translate(view, vec3(0.0, 0.0, 10.18f));
 		view = rotate_x_deg(view, -10.0f);
 	}
@@ -171,13 +172,31 @@ void display() {
 	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
 	modelEnemies = modelGround * modelEnemies;
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
-	red->Bind(GL_TEXTURE0);
-	humanMesh->linkCurrentBuffertoShader(meshShader->ID);
-	glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
-
+	if (enemystate == 0) {
+		red->Bind(GL_TEXTURE0);
+		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
+		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+	}
 	glutSwapBuffers();
 
 }
+
+bool shoot() {
+	float x = transform_x + enemy_x;
+	float y = transform_y + enemy_y;
+
+	float angle_x = cos((rotate_x+90) * PI / 180.0f);
+	float angle_y = sin((rotate_x+90) * PI / 180.0f);
+
+	float angle_cos = (x * angle_x + y * angle_y) / (sqrt(pow(x, 2) + pow(y, 2)) + sqrt(pow(angle_x, 2) + pow(angle_y, 2)));
+	printf("%f  %f  %f  %f\n",x, y, angle_x, angle_y);
+	printf("%f  %f  %f\n\n", rotate_x,  angle_cos, acos(angle_cos)* 180.0f / PI);
+	if (angle_cos > 0.9f) {
+		return true;
+	}
+	return false;
+}
+
 
 bool collision() {
 	int x = 15;
@@ -227,7 +246,6 @@ void init()
 	ground->generateObjectBufferMesh("../models/ground.dae");
 	house = new Mesh();
 	house->generateObjectBufferMesh("../models/house.dae");
-
 	test = new TextureScreen();
 	test->generateObjectBuffer();
 
@@ -249,34 +267,41 @@ void init()
 // Placeholder code for the keypress
 void keypress(unsigned char key, int x, int y) {
 	if (key == 'w') {
-		transform_y = transform_y - 0.5 * cos(rotate_x*PI / 180.0f);
-		transform_x = transform_x + 0.5 * sin(rotate_x*PI / 180.0f);
+		transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
+		transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
 		if (collision()) {
-			transform_y = transform_y + 0.5 * cos(rotate_x*PI / 180.0f);
-			transform_x = transform_x - 0.5 * sin(rotate_x*PI / 180.0f);
+			transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
+			transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
 		}
 	}
 	if (key == 'a') {
-		rotate_x = rotate_x - 1;
+		rotate_x = fmod(rotate_x - 1.0f, 360.0);
 	}
 	if (key == 's') {
-		transform_y = transform_y + 0.5 * cos(rotate_x*PI / 180.0f);
-		transform_x = transform_x - 0.5 * sin(rotate_x*PI / 180.0f);
+		transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
+		transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
 		if (collision()) {
-			transform_y = transform_y - 0.5 * cos(rotate_x*PI / 180.0f);
-			transform_x = transform_x + 0.5 * sin(rotate_x*PI / 180.0f);
+			transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
+			transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
 		}
 	}
 	if (key == 'd') {
-		rotate_x = rotate_x + 1;
+		rotate_x = fmod(rotate_x + 1.0f, 360.0);
 	}
 	if (key == ' ') {
 		
-		if (state == 0) {
-			state = 1;
-		} else if (state == 1){
-			state = 0;
+		if (viewstate == 0) {
+			viewstate = 1;
+		} else if (viewstate == 1){
+			viewstate = 0;
 		}
+	}
+
+	if (key == 'e') {
+		if (shoot()) {
+			enemystate = 1;
+		}
+		
 	}
 
 	glutPostRedisplay();
