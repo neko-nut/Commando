@@ -58,8 +58,13 @@ float rotate_x = 0.0f;
 GLfloat enemy_x = 10.0f;
 GLfloat enemy_y = 20.0f;
 
+
+GLfloat enemy_x2 = -30.0f;
+GLfloat enemy_y2 = 20.0f;
+
 int viewstate = 0;
 int enemystate = 0;
+int enemystate2 = 0;
 
 
 
@@ -173,7 +178,24 @@ void display() {
 	modelEnemies = modelGround * modelEnemies;
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
 	if (enemystate == 0) {
-		//red->Bind(GL_TEXTURE0);
+		red->Bind(GL_TEXTURE0);
+		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
+		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+	}
+
+
+	modelEnemies = identity_mat4();
+	if (enemy_y2 > -30) {
+		enemy_y2 = enemy_y2 - 0.01;
+	}
+	modelEnemies = translate(modelEnemies, vec3(enemy_x2, 0.0f, enemy_y2));
+	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
+	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
+	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
+	modelEnemies = modelGround * modelEnemies;
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
+	if (enemystate2 == 0) {
+		red->Bind(GL_TEXTURE0);
 		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
 		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
 	}
@@ -185,18 +207,37 @@ void display() {
 }
 
 bool shoot() {
-	float x = transform_x * 10 + enemy_x;
-	float y = transform_y * 10 + enemy_y;
+	float x = -(enemy_x + transform_x * 4);
+	float y = enemy_y + transform_y * 4;
 
-	float angle_x = cos((rotate_x+90) * PI / 180.0f);
-	float angle_y = sin((rotate_x+90) * PI / 180.0f);
+	float angle_x = cos((90 - rotate_x) * PI / 180.0f);
+	float angle_y = sin((90 - rotate_x) * PI / 180.0f);
 
 	float angle_cos = (x * angle_x + y * angle_y) / (sqrt(pow(x, 2) + pow(y, 2)) + sqrt(pow(angle_x, 2) + pow(angle_y, 2)));
-	printf("%f  %f  %f  %f\n",x, y, angle_x, angle_y);
-	printf("%f  %f  %f\n\n", rotate_x,  angle_cos, acos(angle_cos)* 180.0f / PI);
-	if (angle_cos > 0.9f) {
+	printf("angle 1:  %f  %f  %f  %f  %f  %f  %f  %f\n",x, y, angle_x, angle_y, angle_cos, 90 - rotate_x, acos((x / sqrt(pow(x, 2) + pow(y, 2))))* 180.0f / PI, acos(angle_cos)* 180.0f / PI);
+	if (angle_cos > 0.95f) {
 		return true;
 	}
+
+
+	return false;
+}
+
+
+bool shoot2() {
+	float x = -(enemy_x2 + transform_x * 4);
+	float y = enemy_y2 + transform_y * 4;
+
+	float angle_x = cos((90 - rotate_x) * PI / 180.0f);
+	float angle_y = sin((90 - rotate_x) * PI / 180.0f);
+
+	float angle_cos = (x * angle_x + y * angle_y) / (sqrt(pow(x, 2) + pow(y, 2)) + sqrt(pow(angle_x, 2) + pow(angle_y, 2)));
+	printf("angle 2:  %f  %f  %f  %f  %f  %f  %f  %f\n\n", x, y, angle_x, angle_y, angle_cos, 90 - rotate_x, acos((x / sqrt(pow(x, 2) + pow(y, 2))))* 180.0f / PI, acos(angle_cos)* 180.0f / PI);
+	if (angle_cos > 0.95f) {
+		return true;
+	}
+
+
 	return false;
 }
 
@@ -306,6 +347,10 @@ void keypress(unsigned char key, int x, int y) {
 	if (key == 'e') {
 		if (shoot()) {
 			enemystate = 1;
+		}
+
+		if (shoot2()) {
+			enemystate2 = 1;
 		}
 		
 	}
