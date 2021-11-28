@@ -160,7 +160,7 @@ void display() {
 	// Update the appropriate uniform and draw the mesh again
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelBarrier.m);
 	white->Bind(GL_TEXTURE0);
-	house->linkCurrentBuffertoShader(meshShader->ID);
+	house->linkCurrentBuffertoShader(textureShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, house->mesh_data.mPointCount);
 
 
@@ -173,17 +173,20 @@ void display() {
 	modelEnemies = modelGround * modelEnemies;
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
 	if (enemystate == 0) {
-		red->Bind(GL_TEXTURE0);
+		//red->Bind(GL_TEXTURE0);
 		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
 		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
 	}
+
+
+
 	glutSwapBuffers();
 
 }
 
 bool shoot() {
-	float x = transform_x + enemy_x;
-	float y = transform_y + enemy_y;
+	float x = transform_x * 10 + enemy_x;
+	float y = transform_y * 10 + enemy_y;
 
 	float angle_x = cos((rotate_x+90) * PI / 180.0f);
 	float angle_y = sin((rotate_x+90) * PI / 180.0f);
@@ -253,7 +256,7 @@ void init()
 	grass = new Texture(GL_TEXTURE_2D, "../textures/grass.JPG");
 	grass->Load();
 
-	white = new Texture(GL_TEXTURE_2D, "../textures/white.JPG");
+	white = new Texture(GL_TEXTURE_2D, "../textures/house.png");
 	white->Load();
 
 	red = new Texture(GL_TEXTURE_2D, "../textures/red.JPG");
@@ -273,6 +276,8 @@ void keypress(unsigned char key, int x, int y) {
 			transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
 			transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
 		}
+
+		printf("Transform: x  %f  y %f\n", transform_x, transform_y);
 	}
 	if (key == 'a') {
 		rotate_x = fmod(rotate_x - 1.0f, 360.0);
@@ -284,6 +289,7 @@ void keypress(unsigned char key, int x, int y) {
 			transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
 			transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
 		}
+		printf("Transform: x  %f  y %f\n", transform_x, transform_y);
 	}
 	if (key == 'd') {
 		rotate_x = fmod(rotate_x + 1.0f, 360.0);
