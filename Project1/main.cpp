@@ -394,6 +394,42 @@ void keypress(unsigned char key, int x, int y) {
 }
 
 
+void mousepress(int button, int state, int x, int y) {
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		if (viewstate == 0) {
+			viewstate = 1;
+		}
+		else if (viewstate == 1) {
+			viewstate = 0;
+		}
+	}
+
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+		if (movemouse == 0) {
+			mouse_x = x;
+			mouse_y = y;
+			movemouse = 1;
+		} else {
+			movemouse = 0;
+		}
+		
+	}
+
+	glutPostRedisplay();
+}
+
+
+void mousemove(int x, int y) {
+	if (movemouse == 1) {
+		view_rotate_x += (x - mouse_x) * 0.1f;
+		view_rotate_y += (y - mouse_y) * 0.1f;
+		mouse_x = x;
+		mouse_y = y;
+	}
+	
+}
+
+
 
 int main(int argc, char** argv) {
 
@@ -407,6 +443,8 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(display);
 	glutIdleFunc(updateScene);
 	glutKeyboardFunc(keypress);
+	glutMouseFunc(mousepress);
+	glutPassiveMotionFunc(mousemove);
 
 	// A call to glewInit() must be done after glut is initialized!
 	GLenum res = glewInit();
