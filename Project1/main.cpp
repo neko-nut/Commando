@@ -89,6 +89,8 @@ void display() {
 		glBindBuffer(GL_ARRAY_BUFFER, cube->VBO);
 		cube->linkCurrentBuffertoShader(cubeShader->ID);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+
 	}
 
 
@@ -281,6 +283,7 @@ void init()
 	cubeShader->CompileShaders("../shades/cubeVertexShader.txt", "../shades/cubeFragmentShader.txt");
 	textureShader = new Shader();
 	textureShader ->CompileShaders("../shades/textureVertexShader.txt", "../shades/textureFragmentShader.txt");
+	
 	// load mesh into a vertex buffer array
 	humanMesh = new Mesh();
 	humanMesh->generateObjectBufferMesh("../models/human.dae");
