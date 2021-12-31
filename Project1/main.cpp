@@ -37,23 +37,31 @@ int height = 600;
 
 GLfloat rotate_y = 0.0f;
 Shader* meshShader;
+Shader* aimShader;
 Shader* cubeShader;
 Shader* textureShader;
+Shader* testShader;
 Mesh *humanMesh;
 Mesh *ground;
 Mesh *house;
 Aim *aim;
 
-Texture* grass;
-Texture* white;
+Texture* grassTexture;
+Texture* houseTexture;
 Texture* red;
 Texture* sight;
+
 Game* game;
 TextureScreen* test;
 
 GLfloat transform_x = 0.0f;
 GLfloat transform_y = 0.0f;
 float rotate_x = 0.0f;
+
+int movemouse = 0;
+GLfloat view_rotate_x = 0.0f;
+GLfloat view_rotate_y = 0.0f;
+GLfloat mouse_x, mouse_y;
 
 GLfloat enemy_x = 10.0f;
 GLfloat enemy_y = 20.0f;
@@ -77,130 +85,149 @@ void display() {
 	glClearColor(0.53f, 0.81f, 0.92f, 0.5f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-	//glUseProgram(cubeShader->ID);
-	//glBindBuffer(GL_ARRAY_BUFFER, test->VBO);
-	//test->linkCurrentBuffertoShader(cubeShader->ID);
-	//sight->Bind(GL_TEXTURE0);
-	//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	if (viewstate == 1) {
-		glUseProgram(cubeShader->ID);
-		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
-		aim->linkCurrentBuffertoShader(cubeShader->ID);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
-
-	}
-
-
-	glUseProgram(meshShader->ID);
+	glUseProgram(cubeShader->ID);
 	//Declare your uniform variables that will be used in your shader
-	int matrix_location = glGetUniformLocation(meshShader->ID, "model");
-	int view_mat_location = glGetUniformLocation(meshShader->ID, "view");
-	int proj_mat_location = glGetUniformLocation(meshShader->ID, "proj");
+	int matrix_location = glGetUniformLocation(cubeShader->ID, "model");
+	int view_mat_location = glGetUniformLocation(cubeShader->ID, "view");
+	int proj_mat_location = glGetUniformLocation(cubeShader->ID, "proj");
 
-
-	// Root of the Hierarchy
 	mat4 view = identity_mat4();
-	
-	view = rotate_y_deg(view, 180.0f);
-	view = rotate_x_deg(view, 10.0f);
-	view = translate(view, vec3(0.0, 0.0, -10.0f));
-	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 10.18f));
-		view = rotate_x_deg(view, -10.0f);
-	}
-	
-	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+	view = translate(view, vec3(0.0f, 0.0f, -3.0f));
+	view = rotate_y_deg(view, view_rotate_x);
+	view = rotate_x_deg(view, view_rotate_y);
+	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 100.0f);
 	mat4 model = identity_mat4();
-	
-	model = translate(model, vec3(0.0f, -10.0f, 0.0f));
-	model = rotate_y_deg(model, rotate_x);
-	mat4 humanGround = identity_mat4();
-	humanGround = rotate_y_deg(humanGround, -rotate_x);
-	humanGround = translate(humanGround, vec3(0.0f, 30.0f, 0.0f));
-	humanGround = scale(humanGround, vec3(0.25f, 0.25f, 0.25f));
-	
-	humanGround = model * humanGround;
+	model = rotate_y_deg(model, -55.0f);
 
-	// update uniforms & draw
 	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, humanGround.m);
-	
-	humanMesh->linkCurrentBuffertoShader(meshShader->ID);
-	glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, model.m);
+
+	glBindBuffer(GL_ARRAY_BUFFER, test->VBO);
+	test->linkCurrentBuffertoShader(cubeShader->ID);
+	red->Bind(GL_TEXTURE0);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 36);
 
 
-	glUseProgram(textureShader->ID);
+
+
+
+	if (viewstate == 1) {
+		glUseProgram(aimShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
+		aim->linkCurrentBuffertoShader(aimShader->ID);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+	}
+
+
+	//glUseProgram(meshShader->ID);
 	//Declare your uniform variables that will be used in your shader
-	int texture_matrix_location = glGetUniformLocation(textureShader->ID, "model");
-	int texture_view_mat_location = glGetUniformLocation(textureShader->ID, "view");
-	int texture_proj_mat_location = glGetUniformLocation(textureShader->ID, "proj");
+	//int matrix_location = glGetUniformLocation(meshShader->ID, "model");
+	//int view_mat_location = glGetUniformLocation(meshShader->ID, "view");
+	//int proj_mat_location = glGetUniformLocation(meshShader->ID, "proj");
 
 
-	// Set up the child matrix
-	mat4 modelGround = identity_mat4();
-	modelGround = translate(modelGround, vec3(0.0f, -0.19f, 0.0f));
-	modelGround = scale(modelGround, vec3(100.0f, 10.0f, 100.0f));
-	modelGround = translate(modelGround, vec3(transform_x, 0.0f, transform_y));
-	 
-	// Apply the root matrix to the child matrix
-	modelGround = model * modelGround;
-	// Update the appropriate uniform and draw the mesh again
-	glUniformMatrix4fv(texture_proj_mat_location, 1, GL_FALSE, persp_proj.m);
-	glUniformMatrix4fv(texture_view_mat_location, 1, GL_FALSE, view.m);
-	glUniformMatrix4fv(texture_matrix_location, 1, GL_FALSE, modelGround.m);
-	ground->linkCurrentBuffertoShader(textureShader->ID);
-	grass->Bind(GL_TEXTURE0);
-	glDrawArrays(GL_TRIANGLES, 0, ground->mesh_data.mPointCount);
-	
-	
-	mat4 modelBarrier = identity_mat4();
-	modelBarrier = scale(modelBarrier, vec3(0.01f, 0.1f, 0.01f));
-	modelBarrier = scale(modelBarrier, vec3(2.0f, 2.0f, 2.0f));
-	modelBarrier = translate(modelBarrier, vec3(0.0f, 1.0f, 0.3f));
+	//// Root of the Hierarchy
+	//mat4 view = identity_mat4();
+	//
+	//view = rotate_y_deg(view, 180.0f);
+	//view = rotate_x_deg(view, 10.0f);
+	//view = translate(view, vec3(0.0, 0.0, -10.0f));
+	//if (viewstate == 1) {
+	//	view = translate(view, vec3(0.0, 0.0, 10.18f));
+	//	view = rotate_x_deg(view, -10.0f);
+	//}
+	//
+	//mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+	//mat4 model = identity_mat4();
+	//
+	//model = translate(model, vec3(0.0f, -10.0f, 0.0f));
+	//model = rotate_y_deg(model, rotate_x);
+	//mat4 humanGround = identity_mat4();
+	//humanGround = rotate_y_deg(humanGround, -rotate_x);
+	//humanGround = translate(humanGround, vec3(0.0f, 30.0f, 0.0f));
+	//humanGround = scale(humanGround, vec3(0.25f, 0.25f, 0.25f));
+	//
+	//humanGround = model * humanGround;
 
-	modelBarrier = modelGround * modelBarrier;
-
-	// Update the appropriate uniform and draw the mesh again
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelBarrier.m);
-	white->Bind(GL_TEXTURE0);
-	house->linkCurrentBuffertoShader(textureShader->ID);
-	glDrawArrays(GL_TRIANGLES, 0, house->mesh_data.mPointCount);
-
-
-	//enemy_y = enemy_y - 0.01;
-	mat4 modelEnemies = identity_mat4();
-	modelEnemies = translate(modelEnemies, vec3(enemy_x, 0.0f, enemy_y));
-	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
-	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
-	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
-	modelEnemies = modelGround * modelEnemies;
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
-	if (enemystate == 0) {
-		red->Bind(GL_TEXTURE0);
-		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
-		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
-	}
+	//// update uniforms & draw
+	//glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	//glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
+	//glUniformMatrix4fv(matrix_location, 1, GL_FALSE, humanGround.m);
+	//
+	//humanMesh->linkCurrentBuffertoShader(meshShader->ID);
+	//glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
 
 
-	modelEnemies = identity_mat4();
-	if (enemy_y2 > -30) {
-		enemy_y2 = enemy_y2 - 0.01;
-	}
-	modelEnemies = translate(modelEnemies, vec3(enemy_x2, 0.0f, enemy_y2));
-	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
-	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
-	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
-	modelEnemies = modelGround * modelEnemies;
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
-	if (enemystate2 == 0) {
-		red->Bind(GL_TEXTURE0);
-		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
-		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
-	}
+	//glUseProgram(textureShader->ID);
+	////Declare your uniform variables that will be used in your shader
+	//int texture_matrix_location = glGetUniformLocation(textureShader->ID, "model");
+	//int texture_view_mat_location = glGetUniformLocation(textureShader->ID, "view");
+	//int texture_proj_mat_location = glGetUniformLocation(textureShader->ID, "proj");
+
+
+	//// Set up the child matrix
+	//mat4 modelGround = identity_mat4();
+	//modelGround = translate(modelGround, vec3(0.0f, -0.19f, 0.0f));
+	//modelGround = scale(modelGround, vec3(100.0f, 10.0f, 100.0f));
+	//modelGround = translate(modelGround, vec3(transform_x, 0.0f, transform_y));
+	// 
+	//// Apply the root matrix to the child matrix
+	//modelGround = model * modelGround;
+	//// Update the appropriate uniform and draw the mesh again
+	//glUniformMatrix4fv(texture_proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	//glUniformMatrix4fv(texture_view_mat_location, 1, GL_FALSE, view.m);
+	//glUniformMatrix4fv(texture_matrix_location, 1, GL_FALSE, modelGround.m);
+	//ground->linkCurrentBuffertoShader(textureShader->ID);
+	//grass->Bind(GL_TEXTURE0);
+	//glDrawArrays(GL_TRIANGLES, 0, ground->mesh_data.mPointCount);
+	//
+	//
+	//mat4 modelBarrier = identity_mat4();
+	//modelBarrier = scale(modelBarrier, vec3(0.01f, 0.1f, 0.01f));
+	//modelBarrier = scale(modelBarrier, vec3(2.0f, 2.0f, 2.0f));
+	//modelBarrier = translate(modelBarrier, vec3(0.0f, 1.0f, 0.3f));
+
+	//modelBarrier = modelGround * modelBarrier;
+
+	//// Update the appropriate uniform and draw the mesh again
+	//glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelBarrier.m);
+	//white->Bind(GL_TEXTURE0);
+	//house->linkCurrentBuffertoShader(textureShader->ID);
+	//glDrawArrays(GL_TRIANGLES, 0, house->mesh_data.mPointCount);
+
+
+	////enemy_y = enemy_y - 0.01;
+	//mat4 modelEnemies = identity_mat4();
+	//modelEnemies = translate(modelEnemies, vec3(enemy_x, 0.0f, enemy_y));
+	//modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
+	//modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
+	//modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
+	//modelEnemies = modelGround * modelEnemies;
+	//glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
+	//if (enemystate == 0) {
+	//	red->Bind(GL_TEXTURE0);
+	//	humanMesh->linkCurrentBuffertoShader(meshShader->ID);
+	//	glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+	//}
+
+
+	//modelEnemies = identity_mat4();
+	//if (enemy_y2 > -30) {
+	//	enemy_y2 = enemy_y2 - 0.01;
+	//}
+	//modelEnemies = translate(modelEnemies, vec3(enemy_x2, 0.0f, enemy_y2));
+	//modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
+	//modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
+	//modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
+	//modelEnemies = modelGround * modelEnemies;
+	//glUniformMatrix4fv(matrix_location, 1, GL_FALSE, modelEnemies.m);
+	//if (enemystate2 == 0) {
+	//	red->Bind(GL_TEXTURE0);
+	//	humanMesh->linkCurrentBuffertoShader(meshShader->ID);
+	//	glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+	//}
 
 
 
@@ -279,10 +306,15 @@ void init()
 	// Set up the shaders
 	meshShader = new Shader();
 	meshShader->CompileShaders("../shades/simpleVertexShader.txt", "../shades/simpleFragmentShader.txt");
-	cubeShader = new Shader();
-	cubeShader->CompileShaders("../shades/cubeVertexShader.txt", "../shades/cubeFragmentShader.txt");
+	aimShader = new Shader();
+	aimShader->CompileShaders("../shades/aimVertexShader.txt", "../shades/aimFragmentShader.txt");
 	textureShader = new Shader();
 	textureShader ->CompileShaders("../shades/textureVertexShader.txt", "../shades/textureFragmentShader.txt");
+
+	testShader = new Shader();
+	testShader->CompileShaders("../shades/texturecubeVertexShader.txt", "../shades/texturecubeFragmentShader.txt");
+	cubeShader = new Shader();
+	cubeShader->CompileShaders("../shades/cubeVertexShader.txt", "../shades/cubeFragmentShader.txt");
 	
 	// load mesh into a vertex buffer array
 	humanMesh = new Mesh();
@@ -297,17 +329,17 @@ void init()
 	test->generateObjectBuffer();
 
 	// load tecture
-	grass = new Texture(GL_TEXTURE_2D, "../textures/grass.JPG");
-	grass->Load();
+	grassTexture = new Texture(GL_TEXTURE_2D, "../textures/grass.JPG");
+	grassTexture->Load();
 
-	white = new Texture(GL_TEXTURE_2D, "../textures/house.png");
-	white->Load();
+	houseTexture = new Texture(GL_TEXTURE_2D, "../textures/house.png");
+	houseTexture->Load();
 
 	red = new Texture(GL_TEXTURE_2D, "../textures/red.JPG");
 	red->Load();
 
-	sight = new Texture(GL_TEXTURE_2D, "../textures/test.png");
-	sight->Load();
+	//sight = new Texture(GL_TEXTURE_2D, "../textures/test.png");
+	//sight->Load();
 	
 }
 
