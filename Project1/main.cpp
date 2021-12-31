@@ -22,7 +22,7 @@
 #include "maths_funcs.h"
 #include "Shader.h"
 #include "Mesh.h"
-#include "Cube.h"
+#include "Aim.h"
 #include "TextureScreen.h"
 #include "Texture.h"
 #include "Game.h"
@@ -42,7 +42,7 @@ Shader* textureShader;
 Mesh *humanMesh;
 Mesh *ground;
 Mesh *house;
-Cube *cube;
+Aim *aim;
 
 Texture* grass;
 Texture* white;
@@ -86,8 +86,8 @@ void display() {
 
 	if (viewstate == 1) {
 		glUseProgram(cubeShader->ID);
-		glBindBuffer(GL_ARRAY_BUFFER, cube->VBO);
-		cube->linkCurrentBuffertoShader(cubeShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
+		aim->linkCurrentBuffertoShader(cubeShader->ID);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
 
@@ -287,8 +287,8 @@ void init()
 	// load mesh into a vertex buffer array
 	humanMesh = new Mesh();
 	humanMesh->generateObjectBufferMesh("../models/human.dae");
-	cube = new Cube();
-	cube->generateObjectBuffer();
+	aim = new Aim();
+	aim->generateObjectBuffer();
 	ground = new Mesh();
 	ground->generateObjectBufferMesh("../models/ground.dae");
 	house = new Mesh();

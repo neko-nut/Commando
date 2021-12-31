@@ -1,7 +1,7 @@
-#include "Cube.h"
+#include "Aim.h"
 // VBO Functions - click on + to expand
 #pragma region VBO_FUNCTIONS
-GLuint Cube::generateObjectBuffer() {
+GLuint Aim::generateObjectBuffer() {
 	// Genderate 1 generic buffer object, called VBO
 	glGenBuffers(1, &VBO);
 	// In OpenGL, we bind (make active) the handle to a target name and then execute commands on that target
@@ -14,7 +14,7 @@ GLuint Cube::generateObjectBuffer() {
 	return VBO;
 }
 
-void Cube::linkCurrentBuffertoShader(GLuint shaderProgramID) {
+void Aim::linkCurrentBuffertoShader(GLuint shaderProgramID) {
 	// find the location of the variables that we will be using in the shader program
 	GLuint positionID = glGetAttribLocation(shaderProgramID, "vPosition");
 	// Have to enable this

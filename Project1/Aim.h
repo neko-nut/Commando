@@ -4,7 +4,7 @@
 #include <GL/freeglut.h>
 // Macro for indexing vertex buffer
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
-class Cube
+class Aim
 {
 private:
 	
