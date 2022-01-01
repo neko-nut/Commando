@@ -20,17 +20,17 @@ GLuint TextureScreen::generateObjectBuffer() {
 void TextureScreen::linkCurrentBuffertoShader(GLuint shaderProgramID) {
 	// find the location of the variables that we will be using in the shader program
 	GLuint positionID = glGetAttribLocation(shaderProgramID, "position");
-	GLuint colorID = glGetAttribLocation(shaderProgramID, "color");
+	GLuint normalID = glGetAttribLocation(shaderProgramID, "normal");
 	GLuint textureID = glGetAttribLocation(shaderProgramID, "texCoord");
 	// Have to enable this
 
 	glEnableVertexAttribArray(positionID);
 	// Tell it where to find the position data in the currently active buffer (at index positionID)
-	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	// Similarly, for the color data.
-	/*glEnableVertexAttribArray(colorID);
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(numVertices * 3 * sizeof(GLfloat)));*/
+	glEnableVertexAttribArray(normalID);
+	glVertexAttribPointer(normalID, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(textureID);
-	glVertexAttribPointer(textureID, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(textureID, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 }
 #pragma endregion VBO_FUNCTIONS

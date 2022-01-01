@@ -106,7 +106,7 @@ void display() {
 	glBindBuffer(GL_ARRAY_BUFFER, test->VBO);
 	test->linkCurrentBuffertoShader(cubeShader->ID);
 	red->Bind(GL_TEXTURE0);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 36);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
 
