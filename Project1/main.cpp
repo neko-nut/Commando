@@ -157,7 +157,7 @@ void display() {
 
 
 	mat4 leftShoulderModel = identity_mat4();
-	leftShoulderModel = rotate_x_deg(leftShoulderModel, 20 * sin(walk));
+	leftShoulderModel = rotate_x_deg(leftShoulderModel, 20 * sin(1.5f * walk));
 	leftShoulderModel = translate(leftShoulderModel, vec3(1.5f, 3.5f, 0.0f));
 	leftShoulderModel = scale(leftShoulderModel, vec3(0.3f, 0.1f, 0.3f));
 	leftShoulderModel = humanModel * leftShoulderModel;
@@ -186,7 +186,7 @@ void display() {
 
 
 	mat4 rightShoulderModel = identity_mat4();
-	rightShoulderModel = rotate_x_deg(rightShoulderModel, -20 * sin(walk));
+	rightShoulderModel = rotate_x_deg(rightShoulderModel, -20 * sin(1.5f * walk));
 	rightShoulderModel = translate(rightShoulderModel, vec3(-1.5f, 3.5f, 0.0f));
 	rightShoulderModel = scale(rightShoulderModel, vec3(0.3f, 0.1f, 0.3f));
 	rightShoulderModel = humanModel * rightShoulderModel;
@@ -212,7 +212,7 @@ void display() {
 
 
 	mat4 leftBottomModel = identity_mat4();
-	leftBottomModel = rotate_x_deg(leftBottomModel, -20 * sin(walk));
+	leftBottomModel = rotate_x_deg(leftBottomModel, -20 * sin(1.5f * walk));
 	leftBottomModel = translate(leftBottomModel, vec3(0.5f, -2.5f, 0.0f));
 	leftBottomModel = scale(leftBottomModel, vec3(0.3f, 0.2f, 0.3f));
 	leftBottomModel = humanModel * leftBottomModel;
@@ -238,7 +238,7 @@ void display() {
 
 
 	mat4 rightBottomModel = identity_mat4();
-	rightBottomModel = rotate_x_deg(rightBottomModel, 20 * sin(walk));
+	rightBottomModel = rotate_x_deg(rightBottomModel, 20 * sin(1.5f * walk));
 	rightBottomModel = translate(rightBottomModel, vec3(-0.5f, -2.5f, 0.0f));
 	rightBottomModel = scale(rightBottomModel, vec3(0.3f, 0.2f, 0.3f));
 	rightBottomModel = humanModel * rightBottomModel;
@@ -332,8 +332,6 @@ void display() {
 		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
 		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
 	}
-
-
 
 	glutSwapBuffers();
 
@@ -468,6 +466,7 @@ void keypress(unsigned char key, int x, int y) {
 			transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
 			transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
 		}
+		walk = walk - 0.1f;
 		printf("Transform: x  %f  y %f\n", transform_x, transform_y);
 	}
 	if (key == 'd') {
@@ -481,8 +480,6 @@ void keypress(unsigned char key, int x, int y) {
 			viewstate = 0;
 		}
 	}
-
-
 	glutPostRedisplay();
 }
 
