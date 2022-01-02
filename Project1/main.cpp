@@ -78,6 +78,17 @@ GLfloat greenColor[3] = {0.0f, 0.55f, 0.0f};
 GLfloat bodyColor[3] = { 0.9f, 0.88f, 0.62f };
 float walk = 0;
 
+float houseLocation[5][2] = {
+	{0.0f, 30.0f},
+	{20.0f, 60.0f},
+	{-5.0f, -50.0f},
+	{70.0f, 0.0f},
+	{-45.0f, 20.0f},
+};
+
+
+float houseBox[2] = {11.0f, 10.0f};
+
 
 
 
@@ -104,9 +115,9 @@ void display() {
 	view = rotate_x_deg(view, view_rotate_y);
 	view = rotate_y_deg(view, 180.0f);
 	view = rotate_x_deg(view, 10.0f);
-	view = translate(view, vec3(0.0, 0.0, -10.0f));
+	view = translate(view, vec3(0.0, 0.0, -5.0f));
 	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 10.18f));
+		view = translate(view, vec3(0.0, 0.0, 5.18f));
 		view = rotate_x_deg(view, -10.0f);
 	}
 	
@@ -125,7 +136,7 @@ void display() {
 	int color = glGetUniformLocation(cubeShader->ID, "ourColor");
 
 	mat4 humanModel = identity_mat4();
-	humanModel = translate(humanModel, vec3(0.0f, 0.0f, -3.0f));
+	//humanModel = translate(humanModel, vec3(0.0f, 0.0f, -3.0f));
 	humanModel = rotate_y_deg(humanModel, -rotate_x);
 	humanModel = translate(humanModel, vec3(0.0f, 8.0f, 0.0f));
 	humanModel = scale(humanModel, vec3(1.1f, 1.2f, 1.1f));
@@ -287,19 +298,21 @@ void display() {
 	grassTexture->Bind(GL_TEXTURE0);
 	glDrawArrays(GL_TRIANGLES, 0, groundMesh->mesh_data.mPointCount);
 	
-	
-	mat4 modelBarrier = identity_mat4();
-	modelBarrier = scale(modelBarrier, vec3(0.01f, 0.1f, 0.01f));
-	modelBarrier = scale(modelBarrier, vec3(2.0f, 2.0f, 2.0f));
-	modelBarrier = translate(modelBarrier, vec3(0.0f, 1.0f, 0.3f));
+	for (int i = 0; i < 5; i++) {
+		mat4 modelBarrier = identity_mat4();
+		modelBarrier = scale(modelBarrier, vec3(0.01f, 0.1f, 0.01f));
+		modelBarrier = scale(modelBarrier, vec3(1.8f, 2.0f, 1.4f));
+		modelBarrier = translate(modelBarrier, vec3(0.01 *houseLocation[i][0], 1.0f, 0.01 * houseLocation[i][1]));
 
-	modelBarrier = modelGround * modelBarrier;
+		modelBarrier = modelGround * modelBarrier;
 
-	// Update the appropriate uniform and draw the mesh again
-	glUniformMatrix4fv(texture_matrix_location, 1, GL_FALSE, modelBarrier.m);
-	houseTexture->Bind(GL_TEXTURE0);
-	houseMesh->linkCurrentBuffertoShader(textureShader->ID);
-	glDrawArrays(GL_TRIANGLES, 0, houseMesh->mesh_data.mPointCount);
+		// Update the appropriate uniform and draw the mesh again
+		glUniformMatrix4fv(texture_matrix_location, 1, GL_FALSE, modelBarrier.m);
+		houseTexture->Bind(GL_TEXTURE0);
+		houseMesh->linkCurrentBuffertoShader(textureShader->ID);
+		glDrawArrays(GL_TRIANGLES, 0, houseMesh->mesh_data.mPointCount);
+	}
+
 
 
 	//enemy_y = enemy_y - 0.01;
@@ -321,6 +334,7 @@ void display() {
 	if (enemy_y2 > -30) {
 		enemy_y2 = enemy_y2 - 0.01;
 	}
+
 	modelEnemies = translate(modelEnemies, vec3(enemy_x2, 0.0f, enemy_y2));
 	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
 	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
@@ -367,21 +381,37 @@ bool shoot2() {
 	if (angle_cos > 0.95f) {
 		return true;
 	}
-
-
 	return false;
 }
 
 
-bool collision() {
-	int x = 15;
-	int y = 12.5;
-
-	
-	if (transform_y < -30 + x && transform_x < y && transform_x > -y && transform_y > -30 - x) {
-		return true;
+bool collision_y() {
+	for (int i = 0; i < 5; i++) {
+		if (transform_y < -houseLocation[i][1] + houseBox[1] 
+			&& transform_x < -houseLocation[i][0] + houseBox[0] 
+			&& transform_x > -houseLocation[i][0] -houseBox[0]
+			&& transform_y > -houseLocation[i][1] - houseBox[1])
+		{
+			if (transform_y < -houseLocation[i][1] + houseBox[1] && transform_y > -houseLocation[i][1] - houseBox[1]) {
+				return true;
+			}
+		}
 	}
+	return false;
+}
 
+bool collision_x() {
+	for (int i = 0; i < 5; i++) {
+		if (transform_y < -houseLocation[i][1] + houseBox[1]
+			&& transform_x < -houseLocation[i][0] + houseBox[0]
+			&& transform_x > -houseLocation[i][0] - houseBox[0]
+			&& transform_y > -houseLocation[i][1] - houseBox[1])
+		{
+			if (transform_x < -houseLocation[i][0] + houseBox[0] && transform_x > -houseLocation[i][0] - houseBox[0]) {
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
@@ -447,13 +477,14 @@ void init()
 void keypress(unsigned char key, int x, int y) {
 	if (key == 'w') {
 		transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
-		transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
-		if (collision()) {
+		if (collision_y()) {
 			transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
+		}
+		transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
+		if (collision_x()) {
 			transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
 		}
 		walk = walk + 0.1f;
-		printf("walk: %f \n", sin(walk));
 		printf("Transform: x  %f  y %f\n", transform_x, transform_y);
 	}
 	if (key == 'a') {
@@ -462,7 +493,7 @@ void keypress(unsigned char key, int x, int y) {
 	if (key == 's') {
 		transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
 		transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
-		if (collision()) {
+		if (collision_y()) {
 			transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
 			transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
 		}
@@ -473,7 +504,6 @@ void keypress(unsigned char key, int x, int y) {
 		rotate_x = fmod(rotate_x + 1.0f, 360.0);
 	}
 	if (key == ' ') {
-		
 		if (viewstate == 0) {
 			viewstate = 1;
 		} else if (viewstate == 1){
