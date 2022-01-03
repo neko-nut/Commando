@@ -74,6 +74,7 @@ unsigned int SkyBox::loadCubemap(std::vector<std::string> faces)
 GLuint SkyBox::generateObjectBuffer() {
 
 	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
 
 	std::vector<std::string> faces
@@ -93,11 +94,14 @@ void SkyBox::linkCurrentBuffertoShader(GLuint shaderProgramID) {
 	// find the location of the variables that we will be using in the shader program
 	GLuint positionID = glGetAttribLocation(shaderProgramID, "aPos");
 	// Have to enable this
+	GLuint vao;
+	glGenBuffers(1, &vao);
+	glBindVertexArray(vao);
+	glEnableVertexAttribArray(positionID);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 
 }

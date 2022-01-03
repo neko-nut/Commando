@@ -15,12 +15,16 @@ void TextureScreen::linkCurrentBuffertoShader(GLuint shaderProgramID) {
 	GLuint positionID = glGetAttribLocation(shaderProgramID, "position");
 	GLuint normalID = glGetAttribLocation(shaderProgramID, "normal");
 	// Have to enable this
-
+	GLuint vao;
+	glGenBuffers(1, &vao);
+	glBindVertexArray(vao);
 	glEnableVertexAttribArray(positionID);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// Tell it where to find the position data in the currently active buffer (at index positionID)
 	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	// Similarly, for the color data.
 	glEnableVertexAttribArray(normalID);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glVertexAttribPointer(normalID, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 #pragma endregion VBO_FUNCTIONS

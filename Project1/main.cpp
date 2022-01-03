@@ -26,7 +26,7 @@
 #include "Board.h"
 #include "TextureScreen.h"
 #include "Texture.h"
-#include "Game.h"
+#include "SkyBox.h"
 
 
 #define  PI 3.1415926
@@ -43,12 +43,14 @@ Shader* cubeShader;
 Shader* textureShader;
 Shader* testShader;
 Shader* boardShader;
+Shader* skyboxShader;
 
 Mesh* humanMesh;
 Mesh* groundMesh;
 Mesh* houseMesh;
 Aim* aim;
 Board* board;
+SkyBox* skybox;
 
 Texture* grassTexture;
 Texture* houseTexture;
@@ -56,7 +58,6 @@ Texture* red;
 Texture* gameover;
 Texture* win;
 
-Game* game;
 TextureScreen* human;
 
 GLfloat transform_x = 0.0f;
@@ -68,6 +69,20 @@ GLfloat view_rotate_x = 0.0f;
 GLfloat view_rotate_y = 0.0f;
 GLfloat mouse_x, mouse_y;
 
+float enemies[10][3] = {
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0}
+};
+
+
 GLfloat enemy_x = 10.0f;
 GLfloat enemy_y = 20.0f;
 
@@ -78,7 +93,7 @@ GLfloat enemy_y2 = 20.0f;
 int viewstate = 0;
 int enemystate = 0;
 int enemystate2 = 0;
-int gamestate = 1;
+int gamestate = 0;
 
 GLfloat greenColor[3] = {0.0f, 0.55f, 0.0f};
 GLfloat bodyColor[3] = { 0.9f, 0.88f, 0.62f };
@@ -122,6 +137,50 @@ void display() {
 		glDrawArrays(GL_TRIANGLES, 3, 3);
 	}
 
+
+
+
+	// Root of the Hierarchy
+	mat4 view = identity_mat4();
+	view = rotate_y_deg(view, view_rotate_x);
+	view = rotate_x_deg(view, view_rotate_y);
+	if (viewstate == 1) {
+		view = translate(view, vec3(0.0, 0.0, 6.18f));
+		view = rotate_x_deg(view, -10.0f);
+	}
+	mat4 skybox_view = view;
+	view = rotate_y_deg(view, 180.0f);
+	view = rotate_x_deg(view, 10.0f);
+	view = translate(view, vec3(0.0, 0.0, -6.0f));
+
+	
+	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+	mat4 model = identity_mat4();
+	model = rotate_y_deg(model, rotate_x);
+	mat4 skybox_model = model;
+	model = translate(model, vec3(0.0f, -10.0f, 0.0f));
+	
+	
+	glDepthMask(GL_FALSE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+	glUseProgram(skyboxShader->ID);
+	int skybox_view_mat_location = glGetUniformLocation(skyboxShader->ID, "view");
+	int skybox_proj_mat_location = glGetUniformLocation(skyboxShader->ID, "projection");
+	int skybox_model_mat_location = glGetUniformLocation(skyboxShader->ID, "model");
+	skybox_model = scale(skybox_model, vec3(10000.0f, 10000.0f, 10000.0f));
+	glUniformMatrix4fv(skybox_proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	glUniformMatrix4fv(skybox_view_mat_location, 1, GL_FALSE, view.m);
+	glUniformMatrix4fv(skybox_model_mat_location, 1, GL_FALSE, skybox_model.m);
+	// skybox cube
+	skybox->linkCurrentBuffertoShader(skyboxShader->ID);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthFunc(GL_LESS);
+	glDepthMask(GL_TRUE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	if (viewstate == 1) {
 		glUseProgram(aimShader->ID);
 		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
@@ -129,26 +188,6 @@ void display() {
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
 	}
-
-
-	// Root of the Hierarchy
-	mat4 view = identity_mat4();
-	view = rotate_y_deg(view, view_rotate_x);
-	view = rotate_x_deg(view, view_rotate_y);
-	view = rotate_y_deg(view, 180.0f);
-	view = rotate_x_deg(view, 10.0f);
-	view = translate(view, vec3(0.0, 0.0, -6.0f));
-	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 6.18f));
-		view = rotate_x_deg(view, -10.0f);
-	}
-	
-	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-	mat4 model = identity_mat4();
-	model = translate(model, vec3(0.0f, -10.0f, 0.0f));
-	model = rotate_y_deg(model, rotate_x);
-	
-
 
 	glUseProgram(cubeShader->ID);
 	//Declare your uniform variables that will be used in your shader
@@ -158,7 +197,7 @@ void display() {
 	int color = glGetUniformLocation(cubeShader->ID, "ourColor");
 
 	mat4 humanModel = identity_mat4();
-	//humanModel = translate(humanModel, vec3(0.0f, 0.0f, -3.0f));
+	humanModel = translate(humanModel, vec3(0.0f, 0.0f, -3.0f));
 	humanModel = rotate_y_deg(humanModel, -rotate_x);
 	humanModel = translate(humanModel, vec3(0.0f, 8.0f, 0.0f));
 	humanModel = scale(humanModel, vec3(1.1f, 1.2f, 1.1f));
@@ -176,6 +215,8 @@ void display() {
 	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
 
 	mat4 headModel = identity_mat4();
 	headModel = translate(headModel, vec3(0.0f, 1.2f, 0.0f));
@@ -338,13 +379,23 @@ void display() {
 
 
 	//enemy_y = enemy_y - 0.01;
+
+	glUseProgram(meshShader->ID);
+	//Declare your uniform variables that will be used in your shader
+	int mesh_matrix_location = glGetUniformLocation(meshShader->ID, "model");
+	int mesh_view_mat_location = glGetUniformLocation(meshShader->ID, "view");
+	int mesh_proj_mat_location = glGetUniformLocation(meshShader->ID, "proj");
+
+	glUniformMatrix4fv(mesh_proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	glUniformMatrix4fv(mesh_view_mat_location, 1, GL_FALSE, view.m);
+
 	mat4 modelEnemies = identity_mat4();
 	modelEnemies = translate(modelEnemies, vec3(enemy_x, 0.0f, enemy_y));
 	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
 	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
 	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
 	modelEnemies = modelGround * modelEnemies;
-	glUniformMatrix4fv(texture_matrix_location, 1, GL_FALSE, modelEnemies.m);
+	glUniformMatrix4fv(mesh_matrix_location, 1, GL_FALSE, modelEnemies.m);
 	if (enemystate == 0) {
 		red->Bind(GL_TEXTURE0);
 		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
@@ -368,6 +419,8 @@ void display() {
 		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
 		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
 	}
+
+
 
 	glutSwapBuffers();
 
@@ -457,22 +510,24 @@ void updateScene() {
 
 void init()
 {
-
-	game = new Game();
 	// Set up the shaders
-	meshShader = new Shader();
-	meshShader->CompileShaders("../shades/simpleVertexShader.txt", "../shades/simpleFragmentShader.txt");
 	aimShader = new Shader();
 	aimShader->CompileShaders("../shades/aimVertexShader.txt", "../shades/aimFragmentShader.txt");
 	boardShader = new Shader();
 	boardShader->CompileShaders("../shades/boardVertexShader.txt", "../shades/boardFragmentShader.txt");
 	textureShader = new Shader();
 	textureShader ->CompileShaders("../shades/textureVertexShader.txt", "../shades/textureFragmentShader.txt");
+	cubeShader = new Shader();
+	cubeShader->CompileShaders("../shades/cubeVertexShader.txt", "../shades/cubeFragmentShader.txt");
+	skyboxShader = new Shader();
+	skyboxShader->CompileShaders("../shades/skyboxVertexShader.txt", "../shades/skyboxFragmentShader.txt");
+
 
 	testShader = new Shader();
 	testShader->CompileShaders("../shades/texturecubeVertexShader.txt", "../shades/texturecubeFragmentShader.txt");
-	cubeShader = new Shader();
-	cubeShader->CompileShaders("../shades/cubeVertexShader.txt", "../shades/cubeFragmentShader.txt");
+	meshShader = new Shader();
+	meshShader->CompileShaders("../shades/simpleVertexShader.txt", "../shades/simpleFragmentShader.txt");
+	
 	
 	// load mesh into a vertex buffer array
 	humanMesh = new Mesh();
@@ -487,17 +542,17 @@ void init()
 	houseMesh->generateObjectBufferMesh("../models/house.dae");
 	human = new TextureScreen();
 	human->generateObjectBuffer();
+	skybox = new SkyBox();
+	skybox->generateObjectBuffer();
+
 
 	// load tecture
 	grassTexture = new Texture(GL_TEXTURE_2D, "../textures/grass.JPG");
 	grassTexture->Load();
-
 	houseTexture = new Texture(GL_TEXTURE_2D, "../textures/house.png");
 	houseTexture->Load();
-
 	red = new Texture(GL_TEXTURE_2D, "../textures/red.JPG");
 	red->Load();
-
 	gameover = new Texture(GL_TEXTURE_2D, "../textures/gameover.png");
 	gameover->Load();
 	win = new Texture(GL_TEXTURE_2D, "../textures/win.png");
@@ -578,10 +633,8 @@ void mousepress(int button, int state, int x, int y) {
 			movemouse = 0;
 			view_rotate_x = 0;
 			view_rotate_y = 0;
-		}
-		
+		}	
 	}
-
 	glutPostRedisplay();
 }
 
@@ -593,7 +646,7 @@ void mousemove(int x, int y) {
 		mouse_x = x;
 		mouse_y = y;
 	}
-	
+	glutPostRedisplay();
 }
 
 
