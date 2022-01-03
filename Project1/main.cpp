@@ -23,6 +23,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 #include "Aim.h"
+#include "Board.h"
 #include "TextureScreen.h"
 #include "Texture.h"
 #include "Game.h"
@@ -41,15 +42,19 @@ Shader* aimShader;
 Shader* cubeShader;
 Shader* textureShader;
 Shader* testShader;
-Mesh *humanMesh;
-Mesh *groundMesh;
-Mesh *houseMesh;
-Aim *aim;
+Shader* boardShader;
+
+Mesh* humanMesh;
+Mesh* groundMesh;
+Mesh* houseMesh;
+Aim* aim;
+Board* board;
 
 Texture* grassTexture;
 Texture* houseTexture;
 Texture* red;
-Texture* sight;
+Texture* gameover;
+Texture* win;
 
 Game* game;
 TextureScreen* human;
@@ -73,6 +78,7 @@ GLfloat enemy_y2 = 20.0f;
 int viewstate = 0;
 int enemystate = 0;
 int enemystate2 = 0;
+int gamestate = 1;
 
 GLfloat greenColor[3] = {0.0f, 0.55f, 0.0f};
 GLfloat bodyColor[3] = { 0.9f, 0.88f, 0.62f };
@@ -100,6 +106,22 @@ void display() {
 	glClearColor(0.53f, 0.81f, 0.92f, 0.5f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	if (gamestate == 1) {
+		glUseProgram(boardShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, board->VBO);
+		gameover->Bind(GL_TEXTURE0);
+		board->linkCurrentBuffertoShader(boardShader->ID);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 3, 3);
+	} else if (gamestate == 2) {
+		glUseProgram(boardShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, board->VBO);
+		win->Bind(GL_TEXTURE0);
+		board->linkCurrentBuffertoShader(boardShader->ID);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 3, 3);
+	}
+
 	if (viewstate == 1) {
 		glUseProgram(aimShader->ID);
 		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
@@ -115,9 +137,9 @@ void display() {
 	view = rotate_x_deg(view, view_rotate_y);
 	view = rotate_y_deg(view, 180.0f);
 	view = rotate_x_deg(view, 10.0f);
-	view = translate(view, vec3(0.0, 0.0, -5.0f));
+	view = translate(view, vec3(0.0, 0.0, -6.0f));
 	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 5.18f));
+		view = translate(view, vec3(0.0, 0.0, 6.18f));
 		view = rotate_x_deg(view, -10.0f);
 	}
 	
@@ -435,11 +457,15 @@ void updateScene() {
 
 void init()
 {
+
+	game = new Game();
 	// Set up the shaders
 	meshShader = new Shader();
 	meshShader->CompileShaders("../shades/simpleVertexShader.txt", "../shades/simpleFragmentShader.txt");
 	aimShader = new Shader();
 	aimShader->CompileShaders("../shades/aimVertexShader.txt", "../shades/aimFragmentShader.txt");
+	boardShader = new Shader();
+	boardShader->CompileShaders("../shades/boardVertexShader.txt", "../shades/boardFragmentShader.txt");
 	textureShader = new Shader();
 	textureShader ->CompileShaders("../shades/textureVertexShader.txt", "../shades/textureFragmentShader.txt");
 
@@ -453,6 +479,8 @@ void init()
 	humanMesh->generateObjectBufferMesh("../models/human.dae");
 	aim = new Aim();
 	aim->generateObjectBuffer();
+	board = new Board();
+	board->generateObjectBuffer();
 	groundMesh = new Mesh();
 	groundMesh->generateObjectBufferMesh("../models/ground.dae");
 	houseMesh = new Mesh();
@@ -469,6 +497,11 @@ void init()
 
 	red = new Texture(GL_TEXTURE_2D, "../textures/red.JPG");
 	red->Load();
+
+	gameover = new Texture(GL_TEXTURE_2D, "../textures/gameover.png");
+	gameover->Load();
+	win = new Texture(GL_TEXTURE_2D, "../textures/win.png");
+	win->Load();
 
 	
 }
@@ -492,9 +525,11 @@ void keypress(unsigned char key, int x, int y) {
 	}
 	if (key == 's') {
 		transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
-		transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
 		if (collision_y()) {
 			transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
+		}
+		transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
+		if (collision_x()) {
 			transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
 		}
 		walk = walk - 0.1f;
@@ -516,14 +551,22 @@ void keypress(unsigned char key, int x, int y) {
 
 void mousepress(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		if (viewstate == 1) {
-			if (shoot()) {
-				enemystate = 1;
+		if (gamestate == 0) {
+			if (viewstate == 1) {
+				if (shoot()) {
+					enemystate = 1;
+				}
+				if (shoot2()) {
+					enemystate2 = 1;
+				}
 			}
-			if (shoot2()) {
-				enemystate2 = 1;
-			}
+		}else if (gamestate == 1 || gamestate == 2) {
+			gamestate = 0;
+			transform_x = 0.0f;
+			transform_y = 0.0f;
+			rotate_x = 0.0f;
 		}
+
 	}
 
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
