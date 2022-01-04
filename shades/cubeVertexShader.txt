@@ -1,3 +1,4 @@
+
 #version 330
 
 uniform mat4 view;
@@ -17,18 +18,40 @@ vec3 lightColor = vec3(1.0, 1.0, 1.0);
 
 void main()
 {   
+ 	mat4 ModelViewMatrix = view * model;
+	mat3 NormalMatrix =  mat3(ModelViewMatrix);
+	// Convert normal and position to eye coords
+  	// Normal in view space
+  	vec3 tnorm = normalize( NormalMatrix * normal);
+  	// Position in view space
+  	vec3 eyeCoords = vec3(ModelViewMatrix * vec4(position,1.0));
+
     	// ambient
     	float ambientStrength = 0.5;
     	vec3 ambient = ambientStrength * lightColor;
-  	
+
+	vec3 s = normalize(vec3(lightPos - eyeCoords));
+  
+  	// The diffuse shading equation, dot product gives us the cosine of angle between the vectors
+  	vec3 diffuse = lightColor * max( dot( s, tnorm ), 0.0 );  	
+
+
     	// diffuse 
 	vec3 FragPos = vec3(model * vec4(position, 1.0));
     	vec3 norm = normalize(normal);
    	vec3 lightDir = normalize(lightPos - FragPos);
-    	float diff = max(dot(norm, lightDir), 0.0);
-    	vec3 diffuse = diff * lightColor;
+    	//float diff = max(dot(norm, lightDir), 0.0);
+    	//vec3 diffuse = diff * lightColor;
             
-    	result = (ambient + diffuse) * ourColor;
+
+    	// specular
+    	vec3 viewDir = normalize(eyeCoords - FragPos);
+    	vec3 reflectDir = reflect(-lightDir, norm);  
+    	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    	vec3 specular = lightColor * spec;  
+
+
+    	result = (ambient + diffuse + specular ) * ourColor;
 
 	gl_Position = proj * view * model * vec4(position, 1.0);
 	

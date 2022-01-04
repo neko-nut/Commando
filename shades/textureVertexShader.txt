@@ -18,11 +18,6 @@ uniform mat4 model;
 
 void main(){
 
-	mat4 ModelViewMatrix = view * model;
-	mat3 NormalMatrix =  mat3(ModelViewMatrix);
-	// Convert normal and position to eye coords
-	// Normal in view space
-	vec3 tnorm = normalize( NormalMatrix * vertex_normal);
 
 	// ambient
     	float ambientStrength = 0.5;

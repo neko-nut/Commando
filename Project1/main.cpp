@@ -144,15 +144,15 @@ void display() {
 	mat4 view = identity_mat4();
 	view = rotate_y_deg(view, view_rotate_x);
 	view = rotate_x_deg(view, view_rotate_y);
-	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 6.18f));
-		view = rotate_x_deg(view, -10.0f);
-	}
+
 	mat4 skybox_view = view;
 	view = rotate_y_deg(view, 180.0f);
 	view = rotate_x_deg(view, 10.0f);
-	view = translate(view, vec3(0.0, 0.0, -6.0f));
-
+	view = translate(view, vec3(0.0, 0.0, -8.0f));
+	if (viewstate == 1) {
+		view = translate(view, vec3(0.0, 0.0, 8.18f));
+		view = rotate_x_deg(view, -10.0f);
+	}
 	
 	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 	mat4 model = identity_mat4();
@@ -522,9 +522,6 @@ void init()
 	skyboxShader = new Shader();
 	skyboxShader->CompileShaders("../shades/skyboxVertexShader.txt", "../shades/skyboxFragmentShader.txt");
 
-
-	testShader = new Shader();
-	testShader->CompileShaders("../shades/texturecubeVertexShader.txt", "../shades/texturecubeFragmentShader.txt");
 	meshShader = new Shader();
 	meshShader->CompileShaders("../shades/simpleVertexShader.txt", "../shades/simpleFragmentShader.txt");
 	
