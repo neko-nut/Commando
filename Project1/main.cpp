@@ -92,6 +92,7 @@ int gamestate = 0;
 
 GLfloat greenColor[3] = {0.0f, 0.55f, 0.0f};
 GLfloat bodyColor[3] = { 0.9f, 0.88f, 0.62f };
+GLfloat oramgeColor[3] = { 1.0f, 0.5f, 0.0f };
 float walk = 0;
 
 float houseLocation[5][2] = {
@@ -149,7 +150,7 @@ void display() {
 	view = rotate_x_deg(view, 10.0f);
 	view = translate(view, vec3(0.0, 0.0, -5.0f));
 	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 5.18f));
+		view = translate(view, vec3(0.0, 0.0, 5.3f));
 		view = rotate_x_deg(view, -10.0f);
 	}
 	
@@ -157,7 +158,7 @@ void display() {
 	mat4 model = identity_mat4();
 	model = rotate_y_deg(model, rotate_x);
 	mat4 skybox_model = model;
-	model = translate(model, vec3(0.0f, -10.0f, 0.0f));
+	model = translate(model, vec3(0.0f, -10.5f, 0.0f));
 	
 	
 	glDepthMask(GL_FALSE);
@@ -359,6 +360,7 @@ void display() {
 	grassTexture->Bind(GL_TEXTURE0);
 	glDrawArrays(GL_TRIANGLES, 0, groundMesh->mesh_data.mPointCount);
 	
+
 	for (int i = 0; i < 5; i++) {
 		mat4 modelBarrier = identity_mat4();
 		modelBarrier = scale(modelBarrier, vec3(0.01f, 0.1f, 0.01f));
@@ -382,10 +384,11 @@ void display() {
 	int mesh_matrix_location = glGetUniformLocation(meshShader->ID, "model");
 	int mesh_view_mat_location = glGetUniformLocation(meshShader->ID, "view");
 	int mesh_proj_mat_location = glGetUniformLocation(meshShader->ID, "proj");
+	int enemyColor = glGetUniformLocation(meshShader->ID, "ourColor");
 
 	glUniformMatrix4fv(mesh_proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(mesh_view_mat_location, 1, GL_FALSE, view.m);
-
+	glUniform3fv(enemyColor, 1, oramgeColor);
 
 	for (int i = 0; i < 10; i++) {
 		if (enemyStates[i] == 0) {
@@ -396,7 +399,6 @@ void display() {
 			modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
 			modelEnemies = modelGround * modelEnemies;
 			glUniformMatrix4fv(mesh_matrix_location, 1, GL_FALSE, modelEnemies.m);
-			red->Bind(GL_TEXTURE0);
 			humanMesh->linkCurrentBuffertoShader(meshShader->ID);
 			glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
 		}
@@ -404,7 +406,7 @@ void display() {
 
 
 	shoot();
-	moveEnemies();
+	//moveEnemies();
 
 	glutSwapBuffers();
 
@@ -565,9 +567,8 @@ void init()
 	cubeShader->CompileShaders("../shades/cubeVertexShader.txt", "../shades/cubeFragmentShader.txt");
 	skyboxShader = new Shader();
 	skyboxShader->CompileShaders("../shades/skyboxVertexShader.txt", "../shades/skyboxFragmentShader.txt");
-
 	meshShader = new Shader();
-	meshShader->CompileShaders("../shades/simpleVertexShader.txt", "../shades/simpleFragmentShader.txt");
+	meshShader->CompileShaders("../shades/meshVertexShader.txt", "../shades/meshFragmentShader.txt");
 	
 	
 	// load mesh into a vertex buffer array
