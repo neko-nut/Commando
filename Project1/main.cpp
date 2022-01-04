@@ -69,26 +69,21 @@ GLfloat view_rotate_x = 0.0f;
 GLfloat view_rotate_y = 0.0f;
 GLfloat mouse_x, mouse_y;
 
-float enemies[10][3] = {
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0},
-	{0, 0, 0}
+float enemyLocation[10][2] = {
+	{0.0f, 10.0f},
+	{-30.0f, 20.0f},
+	{60.0f, 50.0f},
+	{60.0f, 50.0f},
+	{60.0f, 50.0f},
+	{60.0f, 50.0f},
+	{60.0f, 50.0f},
+	{60.0f, 50.0f},
+	{60.0f, 50.0f},
+	{60.0f, 50.0f}
 };
 
+int enemyStates[10] = { 0 };
 
-GLfloat enemy_x = 10.0f;
-GLfloat enemy_y = 20.0f;
-
-
-GLfloat enemy_x2 = -30.0f;
-GLfloat enemy_y2 = 20.0f;
 
 int viewstate = 0;
 int enemystate = 0;
@@ -109,9 +104,13 @@ float houseLocation[5][2] = {
 
 
 float houseBox[2] = {11.0f, 10.0f};
+float enemyBox[2] = { 1.0f, 1.0f };
 
 
-
+int shoot();
+void moveEnemies();
+bool collision_y();
+bool collision_x();
 
 void display() {
 
@@ -148,9 +147,9 @@ void display() {
 	mat4 skybox_view = view;
 	view = rotate_y_deg(view, 180.0f);
 	view = rotate_x_deg(view, 10.0f);
-	view = translate(view, vec3(0.0, 0.0, -8.0f));
+	view = translate(view, vec3(0.0, 0.0, -5.0f));
 	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 8.18f));
+		view = translate(view, vec3(0.0, 0.0, 5.18f));
 		view = rotate_x_deg(view, -10.0f);
 	}
 	
@@ -197,7 +196,6 @@ void display() {
 	int color = glGetUniformLocation(cubeShader->ID, "ourColor");
 
 	mat4 humanModel = identity_mat4();
-	humanModel = translate(humanModel, vec3(0.0f, 0.0f, -3.0f));
 	humanModel = rotate_y_deg(humanModel, -rotate_x);
 	humanModel = translate(humanModel, vec3(0.0f, 8.0f, 0.0f));
 	humanModel = scale(humanModel, vec3(1.1f, 1.2f, 1.1f));
@@ -378,7 +376,6 @@ void display() {
 
 
 
-	//enemy_y = enemy_y - 0.01;
 
 	glUseProgram(meshShader->ID);
 	//Declare your uniform variables that will be used in your shader
@@ -389,74 +386,107 @@ void display() {
 	glUniformMatrix4fv(mesh_proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(mesh_view_mat_location, 1, GL_FALSE, view.m);
 
-	mat4 modelEnemies = identity_mat4();
-	modelEnemies = translate(modelEnemies, vec3(enemy_x, 0.0f, enemy_y));
-	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
-	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
-	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
-	modelEnemies = modelGround * modelEnemies;
-	glUniformMatrix4fv(mesh_matrix_location, 1, GL_FALSE, modelEnemies.m);
-	if (enemystate == 0) {
-		red->Bind(GL_TEXTURE0);
-		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
-		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+
+	for (int i = 0; i < 10; i++) {
+		if (enemyStates[i] == 0) {
+			mat4 modelEnemies = identity_mat4();
+			modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
+			modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
+			modelEnemies = translate(modelEnemies, vec3(0.01 * enemyLocation[i][0], 0.0f, 0.01 * enemyLocation[i][1]));
+			modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
+			modelEnemies = modelGround * modelEnemies;
+			glUniformMatrix4fv(mesh_matrix_location, 1, GL_FALSE, modelEnemies.m);
+			red->Bind(GL_TEXTURE0);
+			humanMesh->linkCurrentBuffertoShader(meshShader->ID);
+			glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
+		}
 	}
 
 
-	modelEnemies = identity_mat4();
-	if (enemy_y2 > -30) {
-		enemy_y2 = enemy_y2 - 0.01;
-	}
-
-	modelEnemies = translate(modelEnemies, vec3(enemy_x2, 0.0f, enemy_y2));
-	modelEnemies = scale(modelEnemies, vec3(0.01f, 0.1f, 0.01f));
-	modelEnemies = scale(modelEnemies, vec3(0.25f, 0.25f, 0.25f));
-	modelEnemies = translate(modelEnemies, vec3(0.0f, 0.935f, 0.0f));
-	modelEnemies = modelGround * modelEnemies;
-	glUniformMatrix4fv(texture_matrix_location, 1, GL_FALSE, modelEnemies.m);
-	if (enemystate2 == 0) {
-		red->Bind(GL_TEXTURE0);
-		humanMesh->linkCurrentBuffertoShader(meshShader->ID);
-		glDrawArrays(GL_TRIANGLES, 0, humanMesh->mesh_data.mPointCount);
-	}
-
-
+	shoot();
+	moveEnemies();
 
 	glutSwapBuffers();
 
 }
 
-bool shoot() {
-	float x = -(enemy_x + transform_x * 4);
-	float y = enemy_y + transform_y * 4;
 
-	float angle_x = cos((90 - rotate_x) * PI / 180.0f);
-	float angle_y = sin((90 - rotate_x) * PI / 180.0f);
+void moveEnemies() {
+	for (int i = 0; i < 10; i++) {
+		float x = -enemyLocation[i][0] - transform_x;
+		float y = enemyLocation[i][1] + transform_y;
+		float len = sqrt(x*x + y*y);
 
-	float angle_cos = (x * angle_x + y * angle_y) / (sqrt(pow(x, 2) + pow(y, 2)) + sqrt(pow(angle_x, 2) + pow(angle_y, 2)));
-	printf("angle 1:  %f  %f  %f  %f  %f  %f  %f  %f\n",x, y, angle_x, angle_y, angle_cos, 90 - rotate_x, acos((x / sqrt(pow(x, 2) + pow(y, 2))))* 180.0f / PI, acos(angle_cos)* 180.0f / PI);
-	if (angle_cos > 0.95f) {
-		return true;
+		enemyLocation[i][0] = enemyLocation[i][0] + (x / len) * 0.005f;
+		if (collision_x()) {
+			enemyLocation[i][0] = enemyLocation[i][0] - (x / len) * 0.005f;
+		}
+
+		enemyLocation[i][1] = enemyLocation[i][1] - (y / len) * 0.005f;
+		if (collision_y()) {
+			enemyLocation[i][1] = enemyLocation[i][1] + (y / len) * 0.005f;
+		}
 	}
-
-
-	return false;
 }
 
-
-bool shoot2() {
-	float x = -(enemy_x2 + transform_x * 4);
-	float y = enemy_y2 + transform_y * 4;
-
-	float angle_x = cos((90 - rotate_x) * PI / 180.0f);
-	float angle_y = sin((90 - rotate_x) * PI / 180.0f);
-
-	float angle_cos = (x * angle_x + y * angle_y) / (sqrt(pow(x, 2) + pow(y, 2)) + sqrt(pow(angle_x, 2) + pow(angle_y, 2)));
-	printf("angle 2:  %f  %f  %f  %f  %f  %f  %f  %f\n\n", x, y, angle_x, angle_y, angle_cos, 90 - rotate_x, acos((x / sqrt(pow(x, 2) + pow(y, 2))))* 180.0f / PI, acos(angle_cos)* 180.0f / PI);
-	if (angle_cos > 0.95f) {
-		return true;
+bool cansee(float x, float y, float k, float b, float angle) {
+	if ((angle > 1.55 && angle < 1.6) ||
+		(angle > 4.7 && angle < 4.75) ||
+		(angle < -1.55 && angle > -1.6) ||
+		(angle < -4.7 && angle > -4.75)
+		) {
+		if (x < -transform_x) {
+			return false;
+		}
 	}
-	return false;
+	else if (k * x + b < y) {
+		return false;
+	}
+	return true;
+}
+
+int shoot() {
+	float angle = (90 - rotate_x) * PI / 180.0f;
+	// y = k *x + b
+	float k = tan(angle);
+	float y = -transform_y;
+	float x = transform_x;
+	float b = y - k * x;
+
+	printf("line: %f, %f\n", k, b);
+
+	for (int i = 0; i < 10 ; i++) {
+		// enemy can be seen
+		float x1 = -enemyLocation[i][0] + enemyBox[0];
+		float x2 = -enemyLocation[i][0] - enemyBox[0];
+		float y1 = x1 * k + b;
+		float y2 = x2 * k + b;
+		float y3 = enemyLocation[i][1] + enemyBox[1];
+		float y4 = enemyLocation[i][1] - enemyBox[1];
+		float x3 = (y3 - b) / k;
+		float x4 = (y4 - b) / k;
+		printf("%i: %f, %f, %f, %f \n",i, y1, y2, y3, y4);
+		if (k > 100) {
+			if (x < max(x1, x2) && x > min(x1, x2)) {
+				printf("success %i\n", i);
+				return i;
+			}
+		} else if (k < 1) {
+			if ((y1 > min(y3, y4) && y1 < max(y3, y4)) || 
+				(y2 > min(y3, y4) && y2 < max(y3, y4))) {
+				printf("success %i\n", i);
+				return i;
+			}
+		} else {
+			if ((x4 > min(x1, x2) && x4 < max(x1, x2)) || 
+				(x3 > min(x1, x2) && x3 < max(x1, x2))) {
+				printf("success %i\n", i);
+				return i;
+			}
+		}
+	
+	}
+	return 11;
 }
 
 
@@ -486,6 +516,20 @@ bool collision_x() {
 				return true;
 			}
 		}
+	}
+	return false;
+}
+
+bool collision_enemy() {
+	for (int i = 0; i < 10; i++) {
+		if (transform_y < -enemyLocation[i][1] + enemyBox[1]
+			&& transform_x < -enemyLocation[i][0] + enemyBox[0]
+			&& transform_x > -enemyLocation[i][0] - enemyBox[0]
+			&& transform_y > -enemyLocation[i][1] - enemyBox[1])
+		{
+			return true;
+		}
+	
 	}
 	return false;
 }
@@ -574,6 +618,7 @@ void keypress(unsigned char key, int x, int y) {
 	}
 	if (key == 'a') {
 		rotate_x = fmod(rotate_x - 1.0f, 360.0);
+		printf("Rotate: %f\n", rotate_x);
 	}
 	if (key == 's') {
 		transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
@@ -589,6 +634,7 @@ void keypress(unsigned char key, int x, int y) {
 	}
 	if (key == 'd') {
 		rotate_x = fmod(rotate_x + 1.0f, 360.0);
+		printf("Rotate: %f\n", rotate_x);
 	}
 	if (key == ' ') {
 		if (viewstate == 0) {
@@ -605,12 +651,12 @@ void mousepress(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		if (gamestate == 0) {
 			if (viewstate == 1) {
-				if (shoot()) {
+				/*if (shoot()) {
 					enemystate = 1;
 				}
 				if (shoot2()) {
 					enemystate2 = 1;
-				}
+				}*/
 			}
 		}else if (gamestate == 1 || gamestate == 2) {
 			gamestate = 0;
