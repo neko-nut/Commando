@@ -93,6 +93,7 @@ int gamestate = 0;
 GLfloat greenColor[3] = {0.0f, 0.55f, 0.0f};
 GLfloat bodyColor[3] = { 0.9f, 0.88f, 0.62f };
 GLfloat oramgeColor[3] = { 1.0f, 0.5f, 0.0f };
+GLfloat whiteColor[3] = { 1.0f, 1.0f, 1.0f };
 float walk = 0;
 
 float houseLocation[5][2] = {
@@ -103,6 +104,8 @@ float houseLocation[5][2] = {
 	{-45.0f, 20.0f},
 };
 
+float targetLocation[2] = { -50.0f, 0 };
+
 
 float houseBox[2] = {11.0f, 10.0f};
 float enemyBox[2] = { 1.0f, 1.0f };
@@ -112,83 +115,11 @@ int shoot();
 void moveEnemies();
 bool collision_y();
 bool collision_x();
-
-void display() {
-
-	// tell GL to only draw onto a pixel if the shape is closer to the viewer
-	glEnable(GL_DEPTH_TEST); // enable depth-testing
-	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-	glClearColor(0.53f, 0.81f, 0.92f, 0.5f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	if (gamestate == 1) {
-		glUseProgram(boardShader->ID);
-		glBindBuffer(GL_ARRAY_BUFFER, board->VBO);
-		gameover->Bind(GL_TEXTURE0);
-		board->linkCurrentBuffertoShader(boardShader->ID);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawArrays(GL_TRIANGLES, 3, 3);
-	} else if (gamestate == 2) {
-		glUseProgram(boardShader->ID);
-		glBindBuffer(GL_ARRAY_BUFFER, board->VBO);
-		win->Bind(GL_TEXTURE0);
-		board->linkCurrentBuffertoShader(boardShader->ID);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawArrays(GL_TRIANGLES, 3, 3);
-	}
+void collision_enemy();
 
 
-
-
-	// Root of the Hierarchy
-	mat4 view = identity_mat4();
-	view = rotate_y_deg(view, view_rotate_x);
-	view = rotate_x_deg(view, view_rotate_y);
-
-	mat4 skybox_view = view;
-	view = rotate_y_deg(view, 180.0f);
-	view = rotate_x_deg(view, 10.0f);
-	view = translate(view, vec3(0.0, 0.0, -5.0f));
-	if (viewstate == 1) {
-		view = translate(view, vec3(0.0, 0.0, 5.3f));
-		view = rotate_x_deg(view, -10.0f);
-	}
-	
-	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-	mat4 model = identity_mat4();
-	model = rotate_y_deg(model, rotate_x);
-	mat4 skybox_model = model;
-	model = translate(model, vec3(0.0f, -10.5f, 0.0f));
-	
-	
-	glDepthMask(GL_FALSE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-	glUseProgram(skyboxShader->ID);
-	int skybox_view_mat_location = glGetUniformLocation(skyboxShader->ID, "view");
-	int skybox_proj_mat_location = glGetUniformLocation(skyboxShader->ID, "projection");
-	int skybox_model_mat_location = glGetUniformLocation(skyboxShader->ID, "model");
-	skybox_model = scale(skybox_model, vec3(10000.0f, 10000.0f, 10000.0f));
-	glUniformMatrix4fv(skybox_proj_mat_location, 1, GL_FALSE, persp_proj.m);
-	glUniformMatrix4fv(skybox_view_mat_location, 1, GL_FALSE, view.m);
-	glUniformMatrix4fv(skybox_model_mat_location, 1, GL_FALSE, skybox_model.m);
-	// skybox cube
-	skybox->linkCurrentBuffertoShader(skyboxShader->ID);
-
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
-	glDepthFunc(GL_LESS);
-	glDepthMask(GL_TRUE);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	if (viewstate == 1) {
-		glUseProgram(aimShader->ID);
-		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
-		aim->linkCurrentBuffertoShader(aimShader->ID);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
-	}
-
+void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
+	glEnable(GL_DEPTH_TEST);
 	glUseProgram(cubeShader->ID);
 	//Declare your uniform variables that will be used in your shader
 	int cube_matrix_location = glGetUniformLocation(cubeShader->ID, "model");
@@ -241,9 +172,6 @@ void display() {
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
-
-
 	mat4 leftArmModel = identity_mat4();
 	leftArmModel = translate(leftArmModel, vec3(0.0f, -0.5f, 0.0f));
 	leftArmModel = scale(leftArmModel, vec3(1.0f, 5.5f, 1.0f));
@@ -254,9 +182,6 @@ void display() {
 	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-
 
 	mat4 rightShoulderModel = identity_mat4();
 	rightShoulderModel = rotate_x_deg(rightShoulderModel, -20 * sin(1.5f * walk));
@@ -270,7 +195,6 @@ void display() {
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
 	mat4 rightArmModel = identity_mat4();
 	rightArmModel = translate(rightArmModel, vec3(0.0f, -0.5f, 0.0f));
 	rightArmModel = scale(rightArmModel, vec3(1.0f, 5.5f, 1.0f));
@@ -281,8 +205,6 @@ void display() {
 	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
 
 	mat4 leftBottomModel = identity_mat4();
 	leftBottomModel = rotate_x_deg(leftBottomModel, -20 * sin(1.5f * walk));
@@ -296,7 +218,6 @@ void display() {
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
 	mat4 leftLegModel = identity_mat4();
 	leftLegModel = translate(leftLegModel, vec3(0.0f, -0.5f, 0.0f));
 	leftLegModel = scale(leftLegModel, vec3(1.0f, 3.5f, 1.0f));
@@ -307,8 +228,6 @@ void display() {
 	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
 
 	mat4 rightBottomModel = identity_mat4();
 	rightBottomModel = rotate_x_deg(rightBottomModel, 20 * sin(1.5f * walk));
@@ -349,7 +268,7 @@ void display() {
 	modelGround = translate(modelGround, vec3(0.0f, -0.19f, 0.0f));
 	modelGround = scale(modelGround, vec3(100.0f, 10.0f, 100.0f));
 	modelGround = translate(modelGround, vec3(transform_x, 0.0f, transform_y));
-	 
+
 	// Apply the root matrix to the child matrix
 	modelGround = model * modelGround;
 	// Update the appropriate uniform and draw the mesh again
@@ -359,7 +278,7 @@ void display() {
 	groundMesh->linkCurrentBuffertoShader(textureShader->ID);
 	grassTexture->Bind(GL_TEXTURE0);
 	glDrawArrays(GL_TRIANGLES, 0, groundMesh->mesh_data.mPointCount);
-	
+
 
 	for (int i = 0; i < 5; i++) {
 		mat4 modelBarrier = identity_mat4();
@@ -404,10 +323,130 @@ void display() {
 		}
 	}
 
+	glUseProgram(cubeShader->ID);
+
+	mat4 targetModel = identity_mat4();
+	targetModel = scale(targetModel, vec3(0.01f, 0.1f, 0.01f));
+	targetModel = translate(targetModel, vec3(0.01f * targetLocation[0], 1.05f, 0.01f * targetLocation[1]));
+	targetModel = modelGround * targetModel;
+
+	glUniformMatrix4fv(cube_proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	glUniformMatrix4fv(cube_view_mat_location, 1, GL_FALSE, view.m);
+	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, targetModel.m);
+	glUniform3fv(color, 1, whiteColor);
+	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
+	human->linkCurrentBuffertoShader(cubeShader->ID);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDisable(GL_DEPTH_TEST);
+
+}
+
+void display() {
+
+	// tell GL to only draw onto a pixel if the shape is closer to the viewer
+	glEnable(GL_DEPTH_TEST); // enable depth-testing
+	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+	glClearColor(0.53f, 0.81f, 0.92f, 0.5f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glViewport(0, 0, width, height);
+	// Root of the Hierarchy
+	mat4 view = identity_mat4();
+	view = rotate_y_deg(view, view_rotate_x);
+	view = rotate_x_deg(view, view_rotate_y);
+
+	view = rotate_y_deg(view, 180.0f);
+	view = rotate_x_deg(view, 10.0f);
+	view = translate(view, vec3(0.0, 0.0, -5.0f));
+	
+	if (viewstate == 1) {
+		view = translate(view, vec3(0.0, 0.3f, 5.3f));
+		view = rotate_x_deg(view, -10.0f);
+	}
+
+	mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+	mat4 model = identity_mat4();
+	model = rotate_y_deg(model, rotate_x);
+	mat4 skybox_model = model;
+	model = translate(model, vec3(0.0f, -10.5f, 0.0f));
+	
+	
+	glDepthMask(GL_FALSE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+	glUseProgram(skyboxShader->ID);
+	int skybox_view_mat_location = glGetUniformLocation(skyboxShader->ID, "view");
+	int skybox_proj_mat_location = glGetUniformLocation(skyboxShader->ID, "projection");
+	int skybox_model_mat_location = glGetUniformLocation(skyboxShader->ID, "model");
+	skybox_model = scale(skybox_model, vec3(10000.0f, 10000.0f, 10000.0f));
+	glUniformMatrix4fv(skybox_proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	glUniformMatrix4fv(skybox_view_mat_location, 1, GL_FALSE, view.m);
+	glUniformMatrix4fv(skybox_model_mat_location, 1, GL_FALSE, skybox_model.m);
+	// skybox cube
+	skybox->linkCurrentBuffertoShader(skyboxShader->ID);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+
+	glDepthFunc(GL_LESS);
+	glDepthMask(GL_TRUE);
+	
+
+	drawObjects(view, persp_proj, model);
+
+	if (gamestate == 1) {
+		glUseProgram(boardShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, board->VBO);
+		gameover->Bind(GL_TEXTURE0);
+		board->linkCurrentBuffertoShader(boardShader->ID);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 3, 3);
+	}
+	else if (gamestate == 2) {
+		glUseProgram(boardShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, board->VBO);
+		win->Bind(GL_TEXTURE0);
+		board->linkCurrentBuffertoShader(boardShader->ID);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 3, 3);
+	}
+	if (viewstate == 1) {
+		glUseProgram(aimShader->ID);
+		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
+		aim->linkCurrentBuffertoShader(aimShader->ID);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+	}
+
+	if (viewstate == 1) {
+		view = rotate_x_deg(view, 10.0f);
+		view = translate(view, vec3(0.0, -0.3f, -5.3f));
+	}
+	view = translate(view, vec3(0.0, 0.0, 5.0f));
+	view = rotate_x_deg(view, -10.0f);
+	view = rotate_y_deg(view, -180.0f);
+	view = rotate_x_deg(view, -view_rotate_y);
+	view = rotate_y_deg(view, -view_rotate_x);
+
+	view = rotate_y_deg(view, 180.0f);
+	view = rotate_x_deg(view, 10.0f);
+	view = translate(view, vec3(0.0, 0.0, -5.0f));
+	
+	view = rotate_x_deg(view, 80.0f);
+	view = translate(view, vec3(0.0, 0.0, -15.0f));
+	view = translate(view, vec3(0.0, -5.0, 0.0f));
+
+	glViewport(0, height * 0.8, width * 0.2, height * 0.2);
+	drawObjects(view, persp_proj, model);
+
+
 
 	shoot();
-	//moveEnemies();
-
+	
+	if (gamestate == 0) {
+		//moveEnemies();
+		collision_enemy();
+	}
 	glutSwapBuffers();
 
 }
@@ -522,19 +561,32 @@ bool collision_x() {
 	return false;
 }
 
-bool collision_enemy() {
+void collision_enemy() {
 	for (int i = 0; i < 10; i++) {
 		if (transform_y < -enemyLocation[i][1] + enemyBox[1]
 			&& transform_x < -enemyLocation[i][0] + enemyBox[0]
 			&& transform_x > -enemyLocation[i][0] - enemyBox[0]
 			&& transform_y > -enemyLocation[i][1] - enemyBox[1])
 		{
-			return true;
+			gamestate = 1;
 		}
-	
+
 	}
-	return false;
 }
+
+
+void collision_target() {
+	for (int i = 0; i < 10; i++) {
+		if (transform_y < -targetLocation[1] + 1
+			&& transform_x < -targetLocation[0] + 1
+			&& transform_x > -targetLocation[0] - 1
+			&& transform_y > -targetLocation[1] - 1)
+		{
+			gamestate = 2;
+		}
+	}
+}
+
 
 void updateScene() {
 
@@ -605,45 +657,51 @@ void init()
 
 // Placeholder code for the keypress
 void keypress(unsigned char key, int x, int y) {
-	if (key == 'w') {
-		transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
-		if (collision_y()) {
-			transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
-		}
-		transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
-		if (collision_x()) {
-			transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
-		}
-		walk = walk + 0.1f;
-		printf("Transform: x  %f  y %f\n", transform_x, transform_y);
-	}
-	if (key == 'a') {
-		rotate_x = fmod(rotate_x - 1.0f, 360.0);
-		printf("Rotate: %f\n", rotate_x);
-	}
-	if (key == 's') {
-		transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
-		if (collision_y()) {
+	if (gamestate == 0) {
+		if (key == 'w') {
 			transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
-		}
-		transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
-		if (collision_x()) {
+			if (collision_y()) {
+				transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
+			}
 			transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
+			if (collision_x()) {
+				transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
+			}
+			collision_target();
+			walk = walk + 0.1f;
+			printf("Transform: x  %f  y %f\n", transform_x, transform_y);
 		}
-		walk = walk - 0.1f;
-		printf("Transform: x  %f  y %f\n", transform_x, transform_y);
-	}
-	if (key == 'd') {
-		rotate_x = fmod(rotate_x + 1.0f, 360.0);
-		printf("Rotate: %f\n", rotate_x);
-	}
-	if (key == ' ') {
-		if (viewstate == 0) {
-			viewstate = 1;
-		} else if (viewstate == 1){
-			viewstate = 0;
+		if (key == 'a') {
+			rotate_x = fmod(rotate_x - 1.0f, 360.0);
+			printf("Rotate: %f\n", rotate_x);
+		}
+		if (key == 's') {
+			transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
+			if (collision_y()) {
+				transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
+			}
+			transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
+			if (collision_x()) {
+				transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
+			}
+			collision_target();
+			walk = walk - 0.1f;
+			printf("Transform: x  %f  y %f\n", transform_x, transform_y);
+		}
+		if (key == 'd') {
+			rotate_x = fmod(rotate_x + 1.0f, 360.0);
+			printf("Rotate: %f\n", rotate_x);
+		}
+		if (key == ' ') {
+			if (viewstate == 0) {
+				viewstate = 1;
+			}
+			else if (viewstate == 1) {
+				viewstate = 0;
+			}
 		}
 	}
+	
 	glutPostRedisplay();
 }
 
@@ -652,20 +710,15 @@ void mousepress(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		if (gamestate == 0) {
 			if (viewstate == 1) {
-				/*if (shoot()) {
-					enemystate = 1;
-				}
-				if (shoot2()) {
-					enemystate2 = 1;
-				}*/
+
 			}
 		}else if (gamestate == 1 || gamestate == 2) {
 			gamestate = 0;
 			transform_x = 0.0f;
 			transform_y = 0.0f;
 			rotate_x = 0.0f;
+			walk = 0;
 		}
-
 	}
 
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
@@ -707,6 +760,8 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(display);
 	glutIdleFunc(updateScene);
 	glutKeyboardFunc(keypress);
+
+	
 	glutMouseFunc(mousepress);
 	glutPassiveMotionFunc(mousemove);
 
