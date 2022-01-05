@@ -15,8 +15,8 @@ void TextureScreen::linkCurrentBuffertoShader(GLuint shaderProgramID) {
 	GLuint positionID = glGetAttribLocation(shaderProgramID, "position");
 	GLuint normalID = glGetAttribLocation(shaderProgramID, "normal");
 	// Have to enable this
-	GLuint vao;
-	glGenBuffers(1, &vao);
+	GLuint vao = 0;
+	//glGenBuffers(1, &vao);
 	glBindVertexArray(vao);
 	glEnableVertexAttribArray(positionID);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);

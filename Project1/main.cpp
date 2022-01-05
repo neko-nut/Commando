@@ -69,20 +69,17 @@ GLfloat view_rotate_x = 0.0f;
 GLfloat view_rotate_y = 0.0f;
 GLfloat mouse_x, mouse_y;
 
-float enemyLocation[10][2] = {
+int const numberOfEnemies = 6;
+float enemyLocation[numberOfEnemies][2] = {
 	{0.0f, 50.0f},
 	{-30.0f, 20.0f},
 	{60.0f, 50.0f},
 	{10.0f, 15.0f},
 	{-40.0f, 0.0f},
 	{30.0f, -50.0f},
-	{20.0f, 35.0f},
-	{-70.0f, 40.0f},
-	{60.0f, 40.0f},
-	{-30.0f, 20.0f}
 };
 
-int enemyStates[10] = { 0 };
+int enemyStates[numberOfEnemies] = { 0 };
 
 
 int viewstate = 0;
@@ -114,8 +111,8 @@ float enemyBox[2] = { 1.0f, 1.0f };
 
 void shoot();
 void moveEnemies();
-bool collision_y();
-bool collision_x();
+bool collision_y(float x, float y);
+bool collision_x(float x, float y);
 void collision_enemy();
 
 
@@ -310,7 +307,7 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 	glUniformMatrix4fv(mesh_view_mat_location, 1, GL_FALSE, view.m);
 	
 
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < numberOfEnemies; i++) {
 		if (enemyStates[i] != 1) {
 			if (enemyStates[i] == 2 && viewstate == 1) {
 				glUniform3fv(enemyColor, 1, redColor);
@@ -442,6 +439,9 @@ void display() {
 	view = translate(view, vec3(0.0, 0.0, -15.0f));
 	view = translate(view, vec3(0.0, -5.0, 0.0f));
 
+	//view = translate(view, vec3(0.0, 0.0, -15.0f));
+	//model = translate(view, vec3(1.0, 0.0, 0.0f));
+
 	glViewport(0, height * 0.8, width * 0.2, height * 0.2);
 	drawObjects(view, persp_proj, model);
 
@@ -457,19 +457,19 @@ void display() {
 
 
 void moveEnemies() {
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < numberOfEnemies; i++) {
 		float x = -enemyLocation[i][0] - transform_x;
 		float y = enemyLocation[i][1] + transform_y;
 		float len = sqrt(x*x + y*y);
 
-		enemyLocation[i][0] = enemyLocation[i][0] + (x / len) * 0.005f;
-		if (collision_x()) {
-			enemyLocation[i][0] = enemyLocation[i][0] - (x / len) * 0.005f;
+		enemyLocation[i][0] = enemyLocation[i][0] + (x / len) * 0.01f;
+		if (collision_x(-enemyLocation[i][0], -enemyLocation[i][1])) {
+			enemyLocation[i][0] = enemyLocation[i][0] - (x / len) * 0.01f;
 		}
 
-		enemyLocation[i][1] = enemyLocation[i][1] - (y / len) * 0.005f;
-		if (collision_y()) {
-			enemyLocation[i][1] = enemyLocation[i][1] + (y / len) * 0.005f;
+		enemyLocation[i][1] = enemyLocation[i][1] - (y / len) * 0.01f;
+		if (collision_y(-enemyLocation[i][0], -enemyLocation[i][1])) {
+			enemyLocation[i][1] = enemyLocation[i][1] + (y / len) * 0.01f;
 		}
 	}
 }
@@ -547,7 +547,7 @@ void shoot() {
 	float x = transform_x;
 	float b = y - k * x;
 
-	for (int i = 0; i < 10 ; i++) {
+	for (int i = 0; i < numberOfEnemies; i++) {
 		if (enemyStates[i] != 1) {
 			// enemy can be seen
 			float x1 = -enemyLocation[i][0] + enemyBox[0];
@@ -587,17 +587,17 @@ void shoot() {
 }
 
 
-bool collision_y() {
-	if (transform_y > 70 || transform_y < -70) {
+bool collision_y(float x, float y) {
+	if (y > 70 || y < -70) {
 		return true;
 	}
 	for (int i = 0; i < 5; i++) {
-		if (transform_y < -houseLocation[i][1] + houseBox[1] 
-			&& transform_x < -houseLocation[i][0] + houseBox[0] 
-			&& transform_x > -houseLocation[i][0] -houseBox[0]
-			&& transform_y > -houseLocation[i][1] - houseBox[1])
+		if (y < -houseLocation[i][1] + houseBox[1] 
+			&& x < -houseLocation[i][0] + houseBox[0] 
+			&& x > -houseLocation[i][0] -houseBox[0]
+			&& y > -houseLocation[i][1] - houseBox[1])
 		{
-			if (transform_y < -houseLocation[i][1] + houseBox[1] && transform_y > -houseLocation[i][1] - houseBox[1]) {
+			if (y < -houseLocation[i][1] + houseBox[1] && y > -houseLocation[i][1] - houseBox[1]) {
 				return true;
 			}
 		}
@@ -605,17 +605,17 @@ bool collision_y() {
 	return false;
 }
 
-bool collision_x() {
-	if (transform_x > 70 || transform_x < -70) {
+bool collision_x(float x, float y) {
+	if (x > 70 || x < -70) {
 		return true;
 	}
 	for (int i = 0; i < 5; i++) {
-		if (transform_y < -houseLocation[i][1] + houseBox[1]
-			&& transform_x < -houseLocation[i][0] + houseBox[0]
-			&& transform_x > -houseLocation[i][0] - houseBox[0]
-			&& transform_y > -houseLocation[i][1] - houseBox[1])
+		if (y < -houseLocation[i][1] + houseBox[1]
+			&& x < -houseLocation[i][0] + houseBox[0]
+			&& x > -houseLocation[i][0] - houseBox[0]
+			&& y > -houseLocation[i][1] - houseBox[1])
 		{
-			if (transform_x < -houseLocation[i][0] + houseBox[0] && transform_x > -houseLocation[i][0] - houseBox[0]) {
+			if (x < -houseLocation[i][0] + houseBox[0] && x > -houseLocation[i][0] - houseBox[0]) {
 				return true;
 			}
 		}
@@ -624,21 +624,22 @@ bool collision_x() {
 }
 
 void collision_enemy() {
-	for (int i = 0; i < 10; i++) {
-		if (transform_y < -enemyLocation[i][1] + enemyBox[1]
-			&& transform_x < -enemyLocation[i][0] + enemyBox[0]
-			&& transform_x > -enemyLocation[i][0] - enemyBox[0]
-			&& transform_y > -enemyLocation[i][1] - enemyBox[1])
-		{
-			gamestate = 1;
+	for (int i = 0; i < numberOfEnemies; i++) {
+		if (enemyStates[i] != 1) {
+			if (transform_y < -enemyLocation[i][1] + enemyBox[1]
+				&& transform_x < -enemyLocation[i][0] + enemyBox[0]
+				&& transform_x > -enemyLocation[i][0] - enemyBox[0]
+				&& transform_y > -enemyLocation[i][1] - enemyBox[1])
+			{
+				gamestate = 1;
+			}
 		}
-
 	}
 }
 
 
 void collision_target() {
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < numberOfEnemies; i++) {
 		if (transform_y < -targetLocation[1] + 1
 			&& transform_x < -targetLocation[0] + 1
 			&& transform_x > -targetLocation[0] - 1
@@ -722,13 +723,13 @@ void init()
 // Placeholder code for the keypress
 void keypress(unsigned char key, int x, int y) {
 	if (gamestate == 0) {
-		if (key == 'w') {
+		if (key == 'w' && viewstate == 0) {
 			transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
-			if (collision_y()) {
+			if (collision_y(transform_x, transform_y)) {
 				transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
 			}
 			transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
-			if (collision_x()) {
+			if (collision_x(transform_x, transform_y)) {
 				transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
 			}
 			collision_target();
@@ -739,13 +740,13 @@ void keypress(unsigned char key, int x, int y) {
 			rotate_x = fmod(rotate_x - 1.0f, 360.0);
 			printf("Rotate: %f\n", rotate_x);
 		}
-		if (key == 's') {
+		if (key == 's' && viewstate == 0) {
 			transform_y = transform_y + 0.1f * cos(rotate_x*PI / 180.0f);
-			if (collision_y()) {
+			if (collision_y(transform_x, transform_y)) {
 				transform_y = transform_y - 0.1f * cos(rotate_x*PI / 180.0f);
 			}
 			transform_x = transform_x - 0.1f * sin(rotate_x*PI / 180.0f);
-			if (collision_x()) {
+			if (collision_x(transform_x, transform_y)) {
 				transform_x = transform_x + 0.1f * sin(rotate_x*PI / 180.0f);
 			}
 			collision_target();
@@ -789,6 +790,23 @@ void mousepress(int button, int state, int x, int y) {
 			transform_y = 0.0f;
 			rotate_x = 0.0f;
 			walk = 0;
+			enemyLocation[0][0] = 0.0f;
+			enemyLocation[0][1] = 50.0f;
+			enemyLocation[1][0] = -30.0f;
+			enemyLocation[1][1] = 20.0f;
+			enemyLocation[2][0] = 60.0f;
+			enemyLocation[2][1] = 50.0f;
+			enemyLocation[3][0] = 10.0f;
+			enemyLocation[3][1] = 15.0f;
+			enemyLocation[4][0] = -40.0f;
+			enemyLocation[4][1] = 0.0f;
+			enemyLocation[5][0] = 30.0f;
+			enemyLocation[5][1] = -50.0f;
+
+			for (int i = 0; i < 6; i++) {
+				enemyStates[i] = 0;
+			}
+			
 		}
 	}
 
