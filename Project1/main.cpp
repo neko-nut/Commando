@@ -83,8 +83,6 @@ int enemyStates[numberOfEnemies] = { 0 };
 
 
 int viewstate = 0;
-int enemystate = 0;
-int enemystate2 = 0;
 int gamestate = 0;
 
 GLfloat greenColor[3] = {0.0f, 0.55f, 0.0f};
@@ -790,6 +788,7 @@ void mousepress(int button, int state, int x, int y) {
 			transform_y = 0.0f;
 			rotate_x = 0.0f;
 			walk = 0;
+			viewstate = 0;
 			enemyLocation[0][0] = 0.0f;
 			enemyLocation[0][1] = 50.0f;
 			enemyLocation[1][0] = -30.0f;
@@ -847,7 +846,7 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(width, height);
-	glutCreateWindow("Hello Triangle");
+	glutCreateWindow("Commando");
 
 	// Tell glut where the display function is
 	glutDisplayFunc(display);

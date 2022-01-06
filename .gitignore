@@ -21,3 +21,7 @@ Project1.sln
 *.filters
 
 Project1/Project1.vcxproj
+
+video/
+
+report/
