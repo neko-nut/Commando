@@ -419,26 +419,15 @@ void display() {
 		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
 	}
 
-	if (viewstate == 1) {
-		view = rotate_x_deg(view, 10.0f);
-		view = translate(view, vec3(0.0, -0.3f, -5.3f));
-	}
-	view = translate(view, vec3(0.0, 0.0, 5.0f));
-	view = rotate_x_deg(view, -10.0f);
-	view = rotate_y_deg(view, -180.0f);
-	view = rotate_x_deg(view, -view_rotate_y);
-	view = rotate_y_deg(view, -view_rotate_x);
+	view = identity_mat4();
 
 	view = rotate_y_deg(view, 180.0f);
-	view = rotate_x_deg(view, 10.0f);
 	view = translate(view, vec3(0.0, 0.0, -5.0f));
 	
-	view = rotate_x_deg(view, 80.0f);
+	view = rotate_x_deg(view, 90.0f);
 	view = translate(view, vec3(0.0, 0.0, -15.0f));
 	view = translate(view, vec3(0.0, -5.0, 0.0f));
 
-	//view = translate(view, vec3(0.0, 0.0, -15.0f));
-	//model = translate(view, vec3(1.0, 0.0, 0.0f));
 
 	glViewport(0, height * 0.8, width * 0.2, height * 0.2);
 	drawObjects(view, persp_proj, model);
