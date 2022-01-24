@@ -12,19 +12,19 @@ Commando is a 3D shooting game. In the game, the player can control the main cha
 
 In this game, the main character is displayed as the center of the screen. It is able to move, tune around, and shoot the enemy. The arm and the leg can sway when it is moving. The color of the main character is green and light yellow, and the color of the enemies are orange. If the player aimed at the enemy, the color of the enemy will change to red. Besides, the target is displayed as a white cube. The following images are the objects that have been used in the game. 
 
-![Objects](.\readmeimage\objects.JPG)
+![Objects](https://github.com/neko-nut/Commando/blob/master/readmeimage/objects.JPG)
 
 ### Views
 
 For the normal view, the camera is located behind the main character. In this view, the main character can move and tune around, but cannot shoot the enemy. There is also a shooting view. For this view, the camera is located in front of the main character, and there is an aim at the center of the screen. In this view, the player can aim and shoot the enemy or turn around, but they cannot move the main character. This aim can help the player to check whether they really point to the enemy or not. Besides, there is a minimum map located at the top-left corner of the screen. This minimum map displays the top-down view of the game, and the camera is always located directly above the main character. The following images display the two views of the game.
 
-![Views](.\readmeimage\views.JPG)
+![Views](https://github.com/neko-nut/Commando/blob/master/readmeimage/views.JPG)
 
 ### States
 
 If they touch the main character, game over, and if the main character reaches the target, the player wins. If the game is over or the player wins the game, a board will be displayed on the screen to show the states of the game, and the objects cannot move until the game is restarted. The following images show the two states where the game attend the end.
 
-![Views](.\readmeimage\states.JPG)
+![States](https://github.com/neko-nut/Commando/blob/master/readmeimage/states.JPG)
 
 ## Operations
 
@@ -68,7 +68,7 @@ The hierarchy has been used anywhere in the game. We first create a basic model 
 
 The actions of the main character are also implemented by the hierarchy. The main character (see in figure 1) has been built by cubes with different colors. The hierarchy of this object has been shown in the figure 9. The model that controls the overall movement is called the human matrix. Each part of the body has its own matrix that handles the cube to its proper size and place. The body model has been bound directly on the human model, and the head, shoulders, and bottoms are bound to the body. The arms and legs are bound to the shoulders and bottoms. When the main character is moving, the shoulders matrix and bottoms matrix (the little green cubes) will rotate around their x-axis. The arms and legs (the light yellow cubes) will rotate with the shoulders and bottoms. 
 
-![Views](.\readmeimage\human.JPG)
+![Human](https://github.com/neko-nut/Commando/blob/master/readmeimage/human.JPG)
 
 
 ### Light and Color
@@ -94,6 +94,6 @@ This game has two types of collision: the collision between the main character a
 
 For the first type of collision, I assume that the main character is a point. If this point inside the enemy's ColliderBox, we can change the game state to the game over directly. This estimate needs to do in every round because the enemy will move towards the player. The estimate about whether the point of the main character inside the house's ColliderBox happens when the main character is moving. After we calculate the next step of the main character, we do the estimation. If the collision happens, we will estimate the house is in front of the main character or it is next to the main character. It can be implemented by calculating whether the x or y coordinate of the main character is between the two x or y boundaries of the ColliderBox. If x is between the x boundary of the ColliderBox, we back x to the previous step. If y is between the x boundary of the ColliderBox, we do the same operation to y. Besides, we also do a similar operation to analyse the movement of the enemy.
 
-![Views](.\readmeimage\box.JPG)
+![Box](https://github.com/neko-nut/Commando/blob/master/readmeimage/box.JPG)
 
 The second collision is calculated whether the ray is going through the enemy's ColliderBox. This ray is towards the front of the main character. With the position of the main character and the angle of its rotation, we can calculate the linear equation of the ray. We can see in the figure 11, if the ray has an intersection with any boundary of the ColliderBox, we can say that the ray has an intersection with the ColliderBox. This intersection can be estimated by substituting the x coordinate or y coordinate to the learner equation, and calculating whether the result is between the boundary. There is a problem if we use this way to estimate the collision. We do not think about whether we can see the enemy or not. Sometimes the enemy is in the back of the player's view, or it has been sheltered from the house, so it cannot be shot actually. To solve this problem, we calculate two vectors: the vector from the main character to the target enemy, and the unit vector of the direction of the view. Then we calculate whether they are in the same direction or the opposite direction. Then we do similar things to the houses. If one of the houses also have a collision with the ray, and it is closer to the main character than the enemy, we will determine that the house cover the enemy so we cannot shoot it.
