@@ -70,6 +70,16 @@ GLfloat view_rotate_y = 0.0f;
 GLfloat mouse_x, mouse_y;
 
 int const numberOfEnemies = 6;
+float enemySetting[numberOfEnemies][2] = {
+	{0.0f, 50.0f},
+	{-30.0f, 20.0f},
+	{60.0f, 50.0f},
+	{10.0f, 15.0f},
+	{-40.0f, 0.0f},
+	{30.0f, -50.0f},
+};
+
+
 float enemyLocation[numberOfEnemies][2] = {
 	{0.0f, 50.0f},
 	{-30.0f, 20.0f},
@@ -78,6 +88,8 @@ float enemyLocation[numberOfEnemies][2] = {
 	{-40.0f, 0.0f},
 	{30.0f, -50.0f},
 };
+
+
 
 int enemyStates[numberOfEnemies] = { 0 };
 
@@ -138,7 +150,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, bodyModel.m);
 	glUniform3fv(color, 1, greenColor);
 
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -151,7 +162,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, headModel.m);
 	glUniform3fv(color, 1, bodyColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -164,7 +174,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, leftShoulderModel.m);
 	glUniform3fv(color, 1, greenColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -175,7 +184,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, leftArmModel.m);
 	glUniform3fv(color, 1, bodyColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -187,7 +195,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, rightShoulderModel.m);
 	glUniform3fv(color, 1, greenColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -198,7 +205,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, rightArmModel.m);
 	glUniform3fv(color, 1, bodyColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -210,7 +216,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, leftBottomModel.m);
 	glUniform3fv(color, 1, greenColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -221,7 +226,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, leftLegModel.m);
 	glUniform3fv(color, 1, bodyColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -233,7 +237,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, rightBottomModel.m);
 	glUniform3fv(color, 1, greenColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -245,7 +248,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, rightLegModel.m);
 	glUniform3fv(color, 1, bodyColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -335,7 +337,6 @@ void drawObjects(mat4 view, mat4 persp_proj, mat4 model) {
 	glUniformMatrix4fv(cube_view_mat_location, 1, GL_FALSE, view.m);
 	glUniformMatrix4fv(cube_matrix_location, 1, GL_FALSE, targetModel.m);
 	glUniform3fv(color, 1, whiteColor);
-	glBindBuffer(GL_ARRAY_BUFFER, human->VBO);
 	human->linkCurrentBuffertoShader(cubeShader->ID);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDisable(GL_DEPTH_TEST);
@@ -405,7 +406,6 @@ void display() {
 	}
 	else if (gamestate == 2) {
 		glUseProgram(boardShader->ID);
-		glBindBuffer(GL_ARRAY_BUFFER, board->VBO);
 		win->Bind(GL_TEXTURE0);
 		board->linkCurrentBuffertoShader(boardShader->ID);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -413,7 +413,6 @@ void display() {
 	}
 	if (viewstate == 1) {
 		glUseProgram(aimShader->ID);
-		glBindBuffer(GL_ARRAY_BUFFER, aim->VBO);
 		aim->linkCurrentBuffertoShader(aimShader->ID);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
@@ -778,20 +777,13 @@ void mousepress(int button, int state, int x, int y) {
 			rotate_x = 0.0f;
 			walk = 0;
 			viewstate = 0;
-			enemyLocation[0][0] = 0.0f;
-			enemyLocation[0][1] = 50.0f;
-			enemyLocation[1][0] = -30.0f;
-			enemyLocation[1][1] = 20.0f;
-			enemyLocation[2][0] = 60.0f;
-			enemyLocation[2][1] = 50.0f;
-			enemyLocation[3][0] = 10.0f;
-			enemyLocation[3][1] = 15.0f;
-			enemyLocation[4][0] = -40.0f;
-			enemyLocation[4][1] = 0.0f;
-			enemyLocation[5][0] = 30.0f;
-			enemyLocation[5][1] = -50.0f;
 
-			for (int i = 0; i < 6; i++) {
+			for (int i = 0; i < numberOfEnemies; i++) {
+				enemyLocation[i][0] = enemySetting[i][0];
+				enemyLocation[i][1] = enemySetting[i][1];
+			}
+
+			for (int i = 0; i < numberOfEnemies; i++) {
 				enemyStates[i] = 0;
 			}
 			
